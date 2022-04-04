@@ -1840,11 +1840,43 @@ def pairwise_swap(integer):
 # 5.8  Draw Line: A monochrome screen is stored as a single array of bytes, allowing eight consecutive
 # pixels to be stored in one byte. The screen has width w, where w is divisible by 8 (that is, no byte will
 # be split across rows). The height of the screen, of course, can be derived from the length of the array
-# and the width. Implement a function that draws a horizontal line from (xl, y) to (x2, y).
+# and the width. Implement a function that draws a horizontal line from (x1, y) to (x2, y).
 # The method signature should look something like:
-# drawLine(byte[] screen, int width, int xl, int x2, int y)
+# drawLine(byte[] screen, int width, int x1, int x2, int y)
 
-def draw_line():
+def draw_line(screen, w, x1, x2, y):
+
+	height = len(screen)/(w/8)
+
+	if x1<x2: start,end = x1,x2
+	else: start,end = x2,x1
+	if start<0 or end>w or y>height: return None
+
+	start_offset = start%8
+	first_fullbyte = start//8
+	# first full byte will be in the next byte within the array, we will have to deal with this one itself
+	if start_offset: first_fullbyte+=1
+	end_offset = end%8
+	last_fullbyte = end//8
+	# last full byte will have been the previous one, we will have to deal with this one itself
+	if end_offset!=7: last_fullbyte-=1
+
+	# place/set all full bytes (8 bits set to 1 is just 0xFF)
+	for i in range(first_fullbyte,last_fullbyte+1): screen[height*(w/8) +i] = 0xFF
+
+	#set first and last bytes, there is a special case for when both are the same
+	# if x1 and x2 are the 1 bits in the following: 00100010, our final byte should be: 00111110
+	# if we 0xFF>>start_offset we get: 00111111, if we 0xFF^(0xFF>>(end_offset+1)) we get: 11111110
+	# if we and these two we get: 00111110, which is what we want!
+	first_byte = start//8
+	last_byte = end//8
+	screen[height*(w/8)+first_byte] = 0xFF>>start_offset
+	screen[height*(w/8)+last_byte] = 0xFF^(0xFF>>(end_offset+1))
+	if first_byte == last_byte: 0xFF>>start_offset & (0xFF^(0xFF>>(end_offset+1)))
+
+	# set all bytes before first and after last to 0
+	for i in range(0,first_byte): screen[height*(w/8)+i] = 0
+	for i in range(last_byte+1,len(screen)): screen[height*(w/8)+i] = 0
 	
 
 
