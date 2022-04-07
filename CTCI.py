@@ -2373,7 +2373,6 @@ class JukeBox:
 		self.cdplayer = None
 		self.cds = []
 	def play(self):
-		song = 
 		self.cdplayer.playSong()
 	def selectCD(self,cd):
 		self.cdplayer.selectCD(cd)
@@ -2485,13 +2484,16 @@ class Vehicle:
 	'''
 
 class Motorcycle(Vehicle):
-	super().__init__('M')
+	def __init__(self):
+		super().__init__('M')
 
 class Car(Vehicle):
-	super().__init__('C')
+	def __init__(self):
+		super().__init__('C')
 
 class Bus(Vehicle):
-	super().__init__('B')
+	def __init__(self):
+		super().__init__('B')
 
 class ParkingLot:
 
@@ -2570,9 +2572,395 @@ class ParkingSpot:
 		return self.spotNumber
 
 #---------------------------------------------------------------------------------------------------------
-# 7.5
+# 7.5 Online Book Reader: Design the data structures for an online book reader system.
+
+class OnlineBookReader:
+	def __init__(self):
+		self.userManager = UserManager()
+		self.library = Library()
+		self.display = Display()
+		self.current_book = None
+		self.current_user = None
+
+	def getLibrary(self):
+		return self.library
+	
+	def getDisplay(self):
+		return self.display
+	
+	def getCurrentBook(self):
+		return self.current_book
+	
+	def getCurrentUser(self):
+		return self.current_user
+
+	def setCurrentBook(self,book):
+		self.current_book = book
+		self.display.displayBook(book)
+
+	def setCurrentUser(self,user):
+		self.current_user = user
+		self.display.displayUser(user)
+	
 
 
+class UserManager:
+	def __init__(self):
+		self.users = {}
+
+	def addUser(self,id, info):
+		if id in self.users: return None
+		new_user = User(id, info)
+		self.users[id] = new_user
+		return new_user
+
+	def deleteUser(self,user):
+		if user.id not in self.users: return False
+		self.users.pop(user.id)
+		return True
+	
+	def getUser(self,id):
+		if id not in self.users: return None
+		return self.users[id]
+	
+class User:
+	def __init__(self,id,info):
+		self.id = id
+		self.info = info
+	def getUserId(self):
+		return self.id
+	def setUserId(self,id):
+		self.id = id
+	def getInfo(self):
+		return self.info
+	def setInfo(self,info):
+		self.info = info
+
+class Display:
+	def __init__(self):
+		self.current_user= None
+		self.current_book= None
+		self.page_num = 0
+	
+	def displayUser(self, user):
+		self.current_user = user.id
+		self.reRender()
+	
+	def displayBook(self,book):
+		self.current_book = book
+		self.reRender()
+
+	def nextPage(self):
+		if self.page_num < self.current_book.getNumPages(): self.page_num+=1
+		else: return None
+		self.reRender()
+
+	def previousPage(self):
+		if self.page_num>0: self.page_num-=1
+		else: return None
+		self.reRender()
+
+	def reRender(self):
+		#display(self.current_book, self.current_user, self.page_num)
+		# peripheral / buffers / drivers that handle 
+		pass
+
+class Library:
+	def __init__(self):
+		self.books = {}
+
+	def addBook(self,id,info):
+		if id in self.books: return None
+		new_book = Book(id, info)
+		self.books[id] = new_book
+		return new_book
+
+	def deleteBook(self,book):
+		if book.id not in self.books: return False
+		self.books.pop(book.id)
+		return True
+	
+	def getBook(self,id):
+		if id not in self.books: return None
+		return self.books[id]
+
+class Book:
+	def __init__(self, id, info):
+		self.id = id
+		self.info = info
+
+	def getBookId(self):
+		return self.id
+	def setUserId(self,id):
+		self.id = id
+	def getInfo(self):
+		return self.info
+	def setInfo(self,info):
+		self.info = info
+	def getNumPages(self):
+		return self.info.getNumPages
 
 
+#---------------------------------------------------------------------------------------------------------
+# 7.6 Jigsaw: Implement an NxN jigsaw puzzle. Design the data structures and explain an algorithm to
+# solve the puzzle. You can assume that you have a fitsWith method which, when passed two
+# puzzle edges, returns true if the two edges belong together.
 
+# This is not as convoluted as the official answer. Basically we create a puzzle, and for each piece, have a set 
+# of the (max 4) edges/surrounding pieces that it fits with and is currently connected to. The piece class also 
+# has a method that allows you to connect another piece to it, this just adds the other piece to the connectedset 
+# within the current piece and vice versa. To solve the puzzle we iterate through each piece in the puzzle, and if 
+# it is in the other fits set, we connect the two.
+
+class JigsawPuzzle:
+	def __init__(self, size):
+		self.pieces = []
+		self.size = size
+		self.makePuzzle()
+
+	def makePuzzle(self):
+		pieces = [[Piece() for _ in range(self.size)] for _ in range(self.size)]
+		for i in range(self.size):
+			for j in range(self.size):
+				if i: pieces[i][j].fitsWith(pieces[i-1][j])
+				if j: pieces[i][j].fitsWith(pieces[i][j-1])
+				self.pieces.append(pieces[i][j])
+	
+	def isSolved(self):
+		for piece in self.pieces:
+			if piece.connected != piece.fits: return False
+		return True
+
+	def solvePuzzle(self):
+		for a in self.pieces:
+			for b in self.pieces:
+				if b in a.fits: a.connect(b)
+
+class Piece:
+	def __init__(self):
+		self.fits = set()
+		self.connected = set()
+
+	def fitsWith(self,piece):
+		self.fits.add(piece)
+		piece.fits.add(self)
+
+	def connect(self,piece):
+		self.connected.add(piece)
+		piece.connected.add(self)
+
+#---------------------------------------------------------------------------------------------------------
+# 7.7 Chat Server: Explain how you would design a chat server. In particular, provide details about the
+# various backend components, classes, and methods. What would be the hardest problems to solve?
+
+# Could be done cleaner with sets, but oh well
+
+class ChatServer:
+
+	def __init__(self):
+		self.chats = {}
+		self.chat_count = 0
+
+	def createChat(self, info):
+		chat = Chat(self.chat_count, info)
+		self.chats[chat.id] = chat
+		self.chat_count+=1
+		return chat
+
+	def deleteChat(self,chatId):
+		if not chatId in self.chats: return False
+		for user in self.chats[chatId].users: user.leaveChat(chatId)
+		self.chats.pop(chatId)
+		return True
+
+class Chat:
+
+	def __init__(self, id, info):
+		self.id = id
+		self.info = info
+		self.users = {}
+		self.messages = []
+
+	def addUser(self,user):
+		self.users[user.id] = user
+
+	def removeUser(self,userId):
+		if not userId in self.users: return False
+		self.users.pop(userId.id)
+		return True
+	
+	def addMessage(self,userId, message):
+		self.messages.append((userId,message))
+
+class User:
+
+	def __init__(self,id,info):
+		self.id = id
+		self.info = info
+		self.chats = {}
+		self.sent_messages = []
+		self.current_chat = None
+	
+	def getId(self):
+		return self.id
+	def setID(self,id):
+		self.id = id
+	def getChats(self):
+		return self.chats
+
+	def createChat(self,info):
+		chat = ChatServer.createChat(info)
+		chat.addUser(self)
+		self.chats[chat.id] = chat
+		self.current_chat = chat
+
+	def leaveChat(self,chatId):
+		self.chats[chatId].removeUser(self.id)
+		self.chats.pop(chatId)
+
+	def setCurrentChat(self, chat):
+		self.current_chat = chat
+
+	def sendMessage(self, message):
+		self.current_chat.addMessage((self.id,message))
+		self.sent_messages = ((self.current_chat.id,message))
+	
+
+#---------------------------------------------------------------------------------------------------------
+# 7.8 Othello: Othello is played as follows: Each Othello piece is white on one side and black on the other.
+# When a piece is surrounded by its opponents on both the left and right sides, or both the top and
+# bottom, it is said to be captured and its color is flipped. On your turn, you must capture at least one
+# of your opponent's pieces. The game ends when either user has no more valid moves. The win is
+# assigned to the person with the most pieces. Implement the object-oriented design for Othello.
+
+PIECE_COLOR = ('B', 'W')
+
+class Othello:
+
+	def __init__(self,rows,cols):
+		self.rows = rows
+		self.cols = cols
+		self.board = Board(rows,cols)
+		self.players = [Player(1,'B',self), Player(2,'W',self)]
+
+	def getBoard(self):
+		return self.board
+
+	def play(self):
+		"""Logic for game play in here"""
+		pass
+
+
+class Board:
+
+	def __init__(self,rows,cols):
+		self.board = [[None for _ in range(cols)] for _ in range(rows)]
+		self.score_white = 0
+		self.score_black = 0
+
+	def setPiece(self,row,col,piece):
+		self.board[row][col] = piece
+		self.flipPieces(row,col,piece.color,direction)
+
+	def flipPieces(self, row, color, direction):
+		# add logic for flipping consecutive pieces and get score_delta
+		self.updateScore(color, score_delta)
+
+	def getScore(self,color):
+		if color == 'B': return self.score_black
+		return self.score_white
+	
+	def updateScore(self,color, score_delta):
+		if color == 'B': 
+			self.score_black += score_delta
+			self.score_white -= score_delta
+		else: 
+			self.score_black -= score_delta
+			self.score_white += score_delta
+
+class Piece:
+
+	def __init__(self,color):
+		self.color = color
+	def getColor(self):
+		return self.color
+	def setColor(self, color):
+		self.color = color
+	def toggleColor(self):
+		self.setColor('B') if self.color == 'W' else self.setColor('W')
+
+class Player:
+
+	def __init__(self,id,color):
+		self.id = id
+		self.color = color
+
+	def getId(self):
+		return self.id
+	def getColor(self):
+		return self.color
+
+#---------------------------------------------------------------------------------------------------------
+# 7.9 Circular Array: Implement a CircularArray class that supports an array-like data structure which
+# can be efficiently rotated. If possible, the class should use a generic type (also called a template), and
+# should support iteration via the standard for (Obj o : circularArray) notation.
+
+
+#---------------------------------------------------------------------------------------------------------
+# 8.1 Triple Step: A child is running up a staircase with n steps and can hop either 1 step, 2 steps, or 3
+# steps at a time. Implement a method to count how many possible ways the child can run up the
+# stairs.
+
+def triple_step(n):
+	if not n: return 0
+	dp = [0 for _ in range(n+1)]
+	dp[0] = 1
+	for i in range(1,n+1): 
+		dp[i] = dp[i-1] + dp[i-2] + dp[i-3]
+	return dp[n]
+
+#or
+def triple_step_mem(n):
+
+	def helper(n):
+		if n<0: return 0
+		if n==0: return 1
+		if m[n]: return m[n]
+
+		m[n] = helper(n-1) + helper(n-2) + helper(n-3)
+		return m[n]
+
+	m=[0 for _ in range(n+1)]
+	return helper(n)
+
+#print(triple_step(5))
+
+#---------------------------------------------------------------------------------------------------------
+# 8.2 Robot in a Grid: Imagine a robot sitting on the upper left corner of grid with r rows and c columns.
+# The robot can only move in two directions, right and down, but certain cells are "off limits" such that
+# the robot cannot step on them. Design an algorithm to find a path for the robot from the top left to
+# the bottom right.
+
+# Time Complexity: O(R*C) therefore N (number of grid spaces), Space Complexity: O(R+C)
+def robot_in_grid(grid):
+
+	def helper(i,j,path):
+		if i>len(grid)-1 or j>len(grid[0])-1 or grid[i][j]==1: return None
+		if i == len(grid)-1 and j == len(grid[0])-1: return path
+		if (i,j) in cache: return None
+		cache.add((i,j))
+		return helper(i+1,j,path+[(i+1,j)]) or helper(i,j+1,path+[(i,j+1)])
+	
+	cache = set()
+	return helper(0,0,[(0,0)])
+
+# Time Complexity: O(R*C) therefore N (number of grid spaces), Space Complexity: O(N)
+def robot_in_grid_dp(grid):
+
+	dp = [[0 for _ in range(len(grid[0]))] for _ in range(len(grid))]
+
+
+g = [[0 for _ in range(5)] for _ in range(5)]
+g[4][0] = 1
+g[4][3] = 1
+print(robot_in_grid(g))
