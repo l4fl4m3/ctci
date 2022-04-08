@@ -2941,7 +2941,7 @@ def triple_step_mem(n):
 # the robot cannot step on them. Design an algorithm to find a path for the robot from the top left to
 # the bottom right.
 
-# Time Complexity: O(R*C) therefore N (number of grid spaces), Space Complexity: O(R+C)
+# Time Complexity: O(R*C) therefore N (number of grid spaces), Space Complexity: O(R*C)
 def robot_in_grid(grid):
 
 	def helper(i,j,path):
@@ -2949,18 +2949,211 @@ def robot_in_grid(grid):
 		if i == len(grid)-1 and j == len(grid[0])-1: return path
 		if (i,j) in cache: return None
 		cache.add((i,j))
+		print(cache)
 		return helper(i+1,j,path+[(i+1,j)]) or helper(i,j+1,path+[(i,j+1)])
 	
 	cache = set()
 	return helper(0,0,[(0,0)])
 
-# Time Complexity: O(R*C) therefore N (number of grid spaces), Space Complexity: O(N)
+# Time Complexity: O(R*C) therefore N (number of grid spaces), Space Complexity: O(R*C)
 def robot_in_grid_dp(grid):
 
 	dp = [[0 for _ in range(len(grid[0]))] for _ in range(len(grid))]
 
-
+'''
 g = [[0 for _ in range(5)] for _ in range(5)]
-g[4][0] = 1
+
+g[1][3] = 1
+g[2][3] = 1
+g[3][3] = 1
 g[4][3] = 1
 print(robot_in_grid(g))
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 8.3 Magic Index: A magic index in an array A[1 ... n-1] is defined to be an index such that A[i] = i. 
+# Given a sorted array of distinct integers, write a method to find a magic index, if one exists, in
+# array A.
+# FOLLOW UP
+# What if the values are not distinct?
+
+# Time Complexity: O(logN), Space Complexity:O(1)
+def magic_index(arr):
+
+	l,r = 0, len(arr)-1
+	while l <= r:
+		mid = (l+r)//2
+		if arr[mid] == mid: return mid
+		if arr[mid] > mid: r = mid-1
+		else: l = mid+1
+	return False
+
+# Time Complexity: O(N), Space Complexity: O(logN)
+def magic_index_followup(arr):
+
+	def helper(l,r):
+		if r<l: return False
+		mid = (l+r)//2
+		if arr[mid] == mid: return mid
+		return helper(l,min(mid-1, arr[mid])) or helper(max(mid+1,arr[mid]),r)
+
+	return helper(0,len(arr)-1)
+                    
+#print(magic_index_followup([-5,-4,-3,-1,5,6,6]))
+
+#---------------------------------------------------------------------------------------------------------
+# 8.4 Power Set: Write a method to return all subsets of a set.
+
+#s =(1,2,3), ps = ((),(a),(b),(c),(a,b),(a,c),(b,c),(a,b,c))
+
+#Time Complexity: O(N*2^N), Space Complexity: O(N*2^N)
+# T(n) = 
+def power_set(s):
+
+	def helper(myset,subset):
+		ps.append(subset)
+		if not myset: return
+		for i in range(len(myset)): 
+			helper(myset[i+1:],subset +[myset[i]])
+	
+	ps = []
+	helper(list(s),[])
+	return ps
+
+#s ={1,2,3}
+#print(power_set(s))
+	
+#---------------------------------------------------------------------------------------------------------
+# 8.5 Recursive Multiply: Write a recursive function to multiply two positive integers without using
+# the * operator (or / operator). You can use addition, subtraction, and bit shifting, but you should
+# minimize the number of those operations.
+
+# Time Complexity: O(log(min(x,y))), Space Complexity: O(log(min(x,y))) (recursion depth stack)
+def recursive_multiply(x,y):
+	# use bit shifting, divide one number by 2(right shift), multiply other (left shift), and watch for the case
+	# where the the right shift number is odd, just add it to the return
+	def helper(small,big):
+		if small&1: return big+ recursive_multiply(small>>1, big<<1)
+		if small: return recursive_multiply(small>>1, big<<1)
+		return 0
+	# find smaller of the two, to reduce number of operations 
+	small = x if x<y else y
+	big = y if x<y else x
+	return helper(small, big)
+
+#print(recursive_multiply(8,6))
+
+#---------------------------------------------------------------------------------------------------------
+# 8.6 Towers of Hanoi: In the classic problem of the Towers of Hanoi, you have 3 towers and N disks of
+# different sizes which can slide onto any tower. The puzzle starts with disks sorted in ascending order
+# of size from top to bottom (i.e., each disk sits on top of an even larger one). You have the following
+# constraints:
+# (1) Only one disk can be moved at a time.
+# (2) A disk is slid off the top of one tower onto another tower.
+# (3) A disk cannot be placed on top of a smaller disk.
+# Write a program to move the disks from the first tower to the last using Stacks.
+
+# Time Complexity: O(2^N), Space Complexity: O(N) (max depth of stack)
+# T(n) = 2T(n-1) + 1 = 2(2T(n-2)+ 1)+1 = (2^2)*T(n-2) + 2^1 + 2^0 = (2^k)*T(n-k) + 2^(k-1) + 2^(k-2) -> base T(1)=1 
+# n-k =1, k=n-1 -> T(n) = (2^(n-1))*T(1) + 2^(k-1) + 2^(k-2) = (2^(n-1)) + 2^(k-1) + 2^(k-2) = (2^k) + 2^(k-1) + 2^(k-2) = (2^n)-1
+
+def tower_of_hanoi(n, fromT, toT, tempT):
+
+	if not n: return
+	tower_of_hanoi(n-1,fromT,tempT,toT)
+	toT.append(fromT.pop())
+	tower_of_hanoi(n-1,tempT,toT,fromT)
+
+'''
+n = 4
+stack1 = [i for i in range(n,0,-1)]
+stack2 = []
+stack3 = []
+
+print("BEFORE")
+print(f'T1: {stack1}')
+print(f'T2: {stack2}')
+print(f'T3: {stack3}')
+tower_of_hanoi(n,stack1,stack3,stack2)
+print("AFTER")
+print(f'T1: {stack1}')
+print(f'T2: {stack2}')
+print(f'T3: {stack3}')
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 8.7 Permutations without Dups: Write a method to compute all permutations of a string of unique
+# characters.
+
+#P(0) = 0, P(1) = 1, P(2) = 2, P(3) = 6, P(4) = 24
+
+# Time Complexity: O(N^2 * N!), Space Complexity: O(N*N!)
+def permutations_without_dups(input_string):
+	
+	def helper(i_s,p):
+		if len(p) == len(input_string):
+			all.append(p)
+			return
+		for i in range(len(i_s)): helper(i_s[:i]+i_s[i+1:],p+i_s[i])
+
+	all = []
+	helper(input_string,'')
+	return all
+
+#print(permutations_without_dups("bert"))
+
+#---------------------------------------------------------------------------------------------------------
+# 8.8 Permutations with Duplicates: Write a method to compute all permutations of a string whose
+# characters are not necessarily unique. The list of permutations should not have duplicates.
+
+# This way is inefficient, doing alot of unnecessary calcs
+def permutations_with_dups_bad(input_string):
+
+	def helper(i_s,p):
+		if len(p) == len(input_string):
+			if p not in all: all.add(p)
+			return
+		for i in range(len(i_s)):
+			print("a")
+			helper(i_s[:i]+i_s[i+1:],p+i_s[i])
+			
+
+	all = set()
+	helper(input_string,'')
+	return all
+
+#print(permutations_with_dups_bad("aaaaaa"))
+
+# Time Complexity: O(N* N!), Space Complexity: O(N*N!), where N=number of unique chars
+def permutations_with_dups(input_string):
+
+	def helper(p):
+		if len(p) == len(input_string):
+			all.append(p)
+			return
+		for k,v in count.items():
+			print("b")
+			if v:
+				count[k]-=1
+				helper(p+k)
+				count[k]+=1
+
+	all = []
+	count = {}
+	for c in input_string:
+		if c not in count:count[c]=1
+		else: count[c]+=1
+	helper('')
+	return all
+
+#print(permutations_with_dups("aaaaaa"))
+
+#---------------------------------------------------------------------------------------------------------
+# 8.9 Parens: Implement an algorithm to print all valid (i.e., properly opened and closed) combinations
+# of n pairs of parentheses.
+# EXAMPLE
+# Input: 3
+# Output: (( () ) ) , ( () () ) , ( () ) () , () ( () ) , () () ()
+
+def parens(n):
+	pass
