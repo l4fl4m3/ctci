@@ -2,6 +2,7 @@
 # 1.1 Implement an alforithm to determine if a string has all unique characters. What if you cannot use additional data structures
 
 # Naive solution
+from calendar import c
 from inspect import _ParameterKind, stack
 from re import I
 from tkinter import N
@@ -3153,7 +3154,195 @@ def permutations_with_dups(input_string):
 # of n pairs of parentheses.
 # EXAMPLE
 # Input: 3
-# Output: (( () ) ) , ( () () ) , ( () ) () , () ( () ) , () () ()
+# Output: ( ( () ) ) , ( () () ) , ( () ) () , () ( () ) , () () ()
 
 def parens(n):
-	pass
+	
+	def helper(p):
+		if len(p)==2*n:
+			all.append(p)
+			return
+		
+		for k,v in count.items():
+			if k=="(" and v:
+				count[k]-=1
+				helper(p+k)
+				count[k]+=1
+			if k==")" and v> count['(']:
+				count[k]-=1
+				helper(p+k)
+				count[k]+=1
+	
+	all = []
+	count={'(':n,')':n}
+	helper('')
+	return all
+
+# Time Complexity: O(N*Cat(N)), Space Complexity: O(N*Cat(N)) where Cat(N) is the nth Catalan number, worst case for all possible
+# permutation of parentheses regardless of validity would be O(2^N) where N= 2*number_pairs_parentheses (e.g. for 3-> N=6)
+def parens_cleaner(n):
+
+	def helper(c_left,c_right,p):
+		if len(p)==2*n:
+			all.append(p)
+			return
+		if c_left: helper(c_left-1,c_right,p+'(')
+		if c_right and c_right>c_left: helper(c_left,c_right-1,p+')')
+	
+	all = []
+	helper(n,n,'')
+	return all
+
+#print(parens_cleaner(4))
+
+#---------------------------------------------------------------------------------------------------------
+# 8.10 Paint Fill: Implement the "paint fill" function that one might see on many image editing programs.
+# That is, given a screen (represented by a two-dimensional array of colors), a point, and a new color,
+# fill in the surrounding area until the color changes from the original color.
+
+# Time Complexity: O(M*N), Space Complex: O(M*N) (max depth of stack)
+def paint_fill(screen,point,new_color):
+
+	def helper(point, old_color, new_color):
+
+		if point[0]==len(screen) or point[1]==len(screen[0]) or \
+			screen[point[0]][point[1]] != old_color or new_color==old_color: return
+		
+		screen[point[0]][point[1]] = new_color
+
+		helper((point[0]+1,point[1]), old_color, new_color)
+		helper((point[0],point[1]+1), old_color, new_color)
+		helper((point[0]-1,point[1]), old_color, new_color)
+		helper((point[0],point[1]-1), old_color, new_color)
+	
+	helper(point, screen[point[0]][point[1]], new_color)
+'''
+s = [['W' for _ in range(5)] for _ in range(5)]
+
+s[0][0] = 'G'
+s[0][1] = 'G'
+s[1][0] = 'G'
+s[1][1] = 'G'
+
+print(s)
+paint_fill(s,(1,3),'B')
+print(s)
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 8.11 Coins: Given an infinite number of quarters (25 cents), dimes (1O cents), nickels (5 cents), and
+# pennies (1 cent), write code to calculate the number of ways of representing n cents.
+
+# Time Complexity: O(N*k) , Space Complexity: O(N*k) where k in # of coin types
+def coins(n):
+
+	def helper(n,coin):
+
+		if not n: return 1
+		if n<0 or coin>(len(coins)-1): return 0
+		if cache[n][coin]>0: return cache[n][coin]
+		count = helper(n-coins[coin],coin) + helper(n,coin+1)
+		cache[n][coin] = count
+		print("i")
+		return count
+		
+	cache = [[0 for _ in range(4)] for _ in range(n+1)]
+	coins = [25,10,5,1]
+	c = helper(n,0)
+	return c
+
+#print(coins(25))
+
+# can also do DP bottom up
+#  1 1 1 1 
+#  0 0 0 0  1
+#  0 0 0 0  2
+#  0 0 0 0  3
+#  0 0 0 0  4
+#  0 0 0 0  5
+# Time Complexity: O(N*k), Space Complexity: O(N*k)
+def coins_dp(n):
+
+	coins = [25,10,5,1]	
+	dp = [[0 for _ in range(4)] for _ in range(n+1)]
+	# ways to repr. sum of zero is always 5, regardless of the coin
+	for i in range(4): dp[0][i]=1
+	# for every j coins, the count adding to current sum i, will at least be the same as the count 
+	# for the previous j-1 coins. If the current sum minus the new coins value, i-coins[j], is greater than or 
+	# equal to zero, then add to the count, the count required to make the sum of i-coins[j] with up to j coins
+	for i in range(n):
+		for j in range(4):
+			dp[i+1][j] = dp[i+1][j-1]
+			if i+1 - coins[j]>=0: dp[i+1][j]+= dp[i+1 - coins[j]][j]
+
+	return dp[-1][-1]
+
+#print(coins_dp(25))
+
+# Time Complexity: O(N*k), Space Complexity: O(N)
+def coins_dp_space_optimized(n):
+	""" think of this version as almost a k-hop version of the problem, with a certain coin type we can get to the current 
+	 	sum, the same amount times as we could get to sum-coin_value using all the other coins, keeping in mind that we will 
+		go thorugh each coin sequetially first, as to not double count anything """
+
+	coins = [25,10,5,1]
+	dp = [0 for _ in range(n+1)]
+	dp[0] = 1
+
+	for i in range(4):
+		for j in range(coins[i]-1,n): dp[j+1] += dp[j+1-coins[i]]
+	
+	return dp[-1]
+
+#print(coins_dp_space_optimized(25))
+
+#---------------------------------------------------------------------------------------------------------
+# 8.12 Eight Queens: Write an algorithm to print all ways of arranging eight queens on an 8x8 chess board
+# so that none of them share the same row, column, or diagonal. In this case, "diagonal" means all
+# diagonals, not just the two that bisect the board.
+#
+# X 0 0 0 0 0 0 0
+# 0 0 X 0 0 0 0 0
+# 0 0 0 0 X 0 0 0   -> not valid
+# 0 0 0 0 0 0 X 0
+# 0 X 0 0 0 0 0 0
+# 0 0 0 X 0 0 0 0
+# 0 0 0 0 0 X 0 0
+# 0 0 0 0 0 0 0 X
+
+# 0 X 0 0 0 0 0 0
+# 0 0 0 X 0 0 0 0
+# 0 0 0 0 0 X 0 0   -> not valid
+# 0 0 0 0 0 0 0 X
+# 0 0 X 0 0 0 0 0
+# 0 0 0 0 X 0 0 0
+# 0 0 0 0 0 0 X 0
+# X 0 0 0 0 0 0 0
+
+# diag_right = row-col, diag_left = row+col, can use this to help us. we will keep track of currently used columns, diag_right, 
+# and diag_left.The queens list keep track of column in a row where a queen has been placed, since we can only have one per row, 
+# the length of this list can be used as a proxy for the row. 
+
+# Time Complexity: O(N!), Space Complexity: O(result*N^2) ??
+def eight_queens(n):
+
+	def helper(queens, diag_left, diag_right):
+		row = len(queens)
+		if row==n:
+			all.append(queens)
+			return
+		for col in range(n):
+			if col not in queens and row-col not in diag_left and row+col not in diag_right:
+				helper(queens+[col], diag_left+[row-col], diag_right+[row+col])
+
+	all = []
+	helper([],[],[])
+	
+	for a in all:
+		for q in a:
+			r = [0 for _ in range(n)]
+			r[q] = 1
+			print(r)
+		print("------")
+	
+#eight_queens(8)
