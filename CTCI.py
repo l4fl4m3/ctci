@@ -6,6 +6,7 @@ from calendar import c
 from inspect import _ParameterKind, stack
 from re import I
 from tkinter import N
+from matplotlib.pyplot import box
 from numpy import char
 
 
@@ -3346,3 +3347,176 @@ def eight_queens(n):
 		print("------")
 	
 #eight_queens(8)
+
+#---------------------------------------------------------------------------------------------------------
+# 8.13 Stack of Boxes: You have a stack of n boxes, with widths w_i , heights h_i, and depths d_i. The boxes
+# cannot be rotated and can only be stacked on top of one another if each box in the stack is strictly
+# larger than the box above it in width, height, and depth. Implement a method to compute the
+# height of the tallest possible stack. The height of a stack is the sum of the heights of each box.
+
+# We can solve this like a knapsack problem, with backtracking
+def stack_of_boxes(boxes):
+	
+	def helper(current):
+		if len(current) ==  n: return
+		if current: all.append(current)
+
+		for i in range(n):
+			if not current: helper(current+[i])
+			elif i not in current and boxes[current[-1]][0]>boxes[i][0] \
+				and boxes[current[-1]][1]>boxes[i][1] and boxes[current[-1]][2]>boxes[i][2]: 
+				helper(current+[i])
+
+	n = len(boxes)
+	all = []
+	helper([])
+	print(all)
+	max_height = 0
+	for comb in all:
+		h = 0
+		for box in comb: h += boxes[box][1]
+		max_height = max(max_height,h)
+	return max_height
+
+# Time Complexity : O(N^2), Space Complexity: O(N)
+def stack_of_boxes_optimized(boxes):
+	
+	def helper(bottom,idx):
+
+		if idx >= len(boxes): return 0
+		
+		if idx in cache and ((boxes[bottom][0]> boxes[idx][0]) and (boxes[bottom][2]> boxes[idx][2])): return cache[idx]
+		
+		h1,h2 = helper(bottom, idx+1), 0
+		
+		if bottom==-1 or ((boxes[bottom][0]> boxes[idx][0]) and (boxes[bottom][2]> boxes[idx][2])): 
+			h2 = boxes[idx][1]+ helper(idx, idx+1)
+
+		m = max(h1,h2)
+		cache[idx] = m
+		
+		return cache[idx]
+
+	# sort by height
+	boxes = sorted(a, key = lambda x: x[1], reverse=True)
+	print(boxes)
+	cache={}
+	m_h = helper(-1,0)
+	return m_h
+
+# Bottom up DP version
+# Time Complexity: O(N^2), Space Complexity: O(N)
+def stack_of_boxes_optimized(boxes):
+	''' We basically turn this into a LIS (longest increasing subsequence) problem. Sort the boxes by height in decreasing order.
+		Then make a DP arr and initalize each index to the height of each respective box. Then for each box,
+		check if any previous box was bigger by all dimensions and if there is such a box, set the current box's dp val (max height)
+		to max(current_box max_height, found box's max_height + current_box height). Finally, since the dp arr represents
+		the max height of a stacks with the box at an index being the top box in the given stack, we just find the max value in the 
+		dp arr to get the height of the tallest stack possible.
+		'''
+	boxes = sorted(boxes, key=lambda x: x[1], reverse=True)
+	dp = [boxes[i][1] for i in range(len(boxes))]
+
+	for i in range(1,len(boxes)):
+		for j in range(i):
+			if boxes[j][0]>boxes[i][0] and boxes[j][2]>boxes[i][2]: 
+				dp[i] = max(dp[i], dp[j]+boxes[i][1])
+	return max(dp)
+
+
+a = [(1,4,6),(4,8,2),(4,5,8),(3,2,4),(6,6,4), (2,1,3), (2,3,3), (5,1,3), (4,5,7)]
+#print(stack_of_boxes_optimized(a))
+
+
+#---------------------------------------------------------------------------------------------------------
+# 8.14 Boolean Evaluation: Given a boolean expression consisting of the symbols 0 (false), 1 (true), &
+# (AND), | (OR), and ^ (XOR), and a desired boolean result value result, implement a function to
+# count the number of ways of parenthesizing the expression such that it evaluates to result. The
+# expression should be fully parenthesized (e.g., (0)^(1)) but not extraneously (e.g.,(((0))^(1))).
+# EXAMPLE
+# countEval("1^0|0|1", false) -> 3  , (1) ^ (0|0|1), (1) ^ ((0) | (0|1)), (1) ^ ((0|0) | (1))
+# countEval("0&0&0&1^1|0", true)-> 10
+
+#Time Complexity: O(N^4), Space Complexity: O(N)
+def boolean_evaluation(b_val, result):
+
+	def helper(b_val, result):
+	
+		if len(b_val)==0: return 0
+		if len(b_val)==1: return 1 if int(b_val) == result else 0 
+		if b_val+str(result) in cache: return cache[b_val+str(result)]
+
+		count = 0
+		for i in range(1,len(b_val),2):
+
+			c = b_val[i]
+			left = b_val[:i]
+			right = b_val[i+1:]
+			left_true = helper(left, True)
+			left_false = helper(left, False)
+			right_true = helper(right, True)
+			right_false = helper(right, False)
+
+			total = (left_true+left_false) * (right_true+right_false)
+
+			if c == '^':
+				all = left_true*right_false + left_false*right_true
+			elif c == '&':
+				all = left_true*right_true
+			elif c == '|':
+				all = left_true*right_true + left_true*right_false + left_false*right_true
+
+			# return count depending on whether target is true or false, if true it is equal to calcs above since we did them for 
+			# true. If false it is just the total possible count - count for true 
+			sub_count = all if result else total-all
+			count += sub_count
+		
+		cache[b_val+str(result)] = count
+		return count
+	
+	cache={}
+	c = helper(b_val,result)
+	return c
+
+# "1^0|0|1"
+# T            F
+#   1 0 0 1 0      1 0 0 1 0
+# 1 1          1 0
+# 0   0        0   1
+# 0     0      0     1
+# 1       1    1       0
+# 0            0
+def boolean_evaluation_dp(b_val, result):
+
+	t = [[0 for _ in range(0,len(b_val)+2,2)] for _ in range(0,len(b_val)+2,2)]
+	f = [[0 for _ in range(0,len(b_val)+2,2)] for _ in range(0,len(b_val)+2,2)]
+
+	# initialize diagonals depending on character
+	for i in range(len(t)):
+		t[i][i] = 1 if b_val[i] == "1" else 0
+		f[i][i] = 0 if b_val[i] == "1" else 1
+
+	for sym in range(1,len(t)):
+		i=0
+		for j in range(sym,len(t)):
+			t[i][j] = f[i][j] = 0
+			for g in range(sym):
+				k = i+g
+				tik = t[i][k] + f[i][k]
+	
+				if b_val[l] == '&':
+					pass
+				if b_val[l] == '|':
+					pass
+				if b_val[l] == '^':
+					pass
+
+			i+=1
+
+
+	
+	#TODO
+
+print(t)
+r = boolean_evaluation("1^0|0|1",True)
+print(r)
