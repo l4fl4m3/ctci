@@ -3478,45 +3478,51 @@ def boolean_evaluation(b_val, result):
 	c = helper(b_val,result)
 	return c
 
+# Bottom up DP approach
 # "1^0|0|1"
 # T            F
-#   1 0 0 1 0      1 0 0 1 0
+#   1 0 0 1      1 0 0 1 
 # 1 1          1 0
 # 0   0        0   1
 # 0     0      0     1
 # 1       1    1       0
-# 0            0
+#
+# Time Complexity: O(N^3), Space Complexity: O(N^2)             
 def boolean_evaluation_dp(b_val, result):
 
-	t = [[0 for _ in range(0,len(b_val)+2,2)] for _ in range(0,len(b_val)+2,2)]
-	f = [[0 for _ in range(0,len(b_val)+2,2)] for _ in range(0,len(b_val)+2,2)]
+	t = [[0 for _ in range(0,len(b_val),2)] for _ in range(0,len(b_val),2)]
+	f = [[0 for _ in range(0,len(b_val),2)] for _ in range(0,len(b_val),2)]
 
 	# initialize diagonals depending on character
 	for i in range(len(t)):
-		t[i][i] = 1 if b_val[i] == "1" else 0
-		f[i][i] = 0 if b_val[i] == "1" else 1
+		t[i][i] = 1 if b_val[i*2] == "1" else 0
+		f[i][i] = 0 if b_val[i*2] == "1" else 1
 
-	for sym in range(1,len(t)):
+	for op in range(1,len(t)):
 		i=0
-		for j in range(sym,len(t)):
-			t[i][j] = f[i][j] = 0
-			for g in range(sym):
+		for j in range(op,len(t)):
+			#t[i][j] = f[i][j] = 0
+			for g in range(op):
+				
 				k = i+g
 				tik = t[i][k] + f[i][k]
-	
-				if b_val[l] == '&':
-					pass
-				if b_val[l] == '|':
-					pass
-				if b_val[l] == '^':
-					pass
+				tkj = t[k+1][j] + f[k+1][j]
+
+				if b_val[2*k+1] == '&':
+					t[i][j] += t[i][k]*t[k+1][j]
+					f[i][j] += ((tik*tkj) - t[i][k]*t[k+1][j])
+
+				if b_val[2*k+1] == '|':
+					t[i][j] += ((tik*tkj) - f[i][k]*f[k+1][j])
+					f[i][j] += f[i][k]*f[k+1][j]
+
+				if b_val[2*k+1] == '^':
+					t[i][j] += t[i][k]*f[k+1][j] + f[i][k]*t[k+1][j]
+					f[i][j] += t[i][k]*t[k+1][j] + f[i][k]*f[k+1][j]
 
 			i+=1
 
+	return t[0][-1] if result else f[0][-1]
 
-	
-	#TODO
-
-print(t)
-r = boolean_evaluation("1^0|0|1",True)
+r = boolean_evaluation_dp("1^0|0|1",True)
 print(r)
