@@ -3487,21 +3487,23 @@ def boolean_evaluation(b_val, result):
 # 0     0      0     1
 # 1       1    1       0
 #
-# Time Complexity: O(N^3), Space Complexity: O(N^2)             
+# Time Complexity: O(N^3), Space Complexity: O(N^2), this approach is very troublesome to wrap your head around             
 def boolean_evaluation_dp(b_val, result):
 
 	t = [[0 for _ in range(0,len(b_val),2)] for _ in range(0,len(b_val),2)]
 	f = [[0 for _ in range(0,len(b_val),2)] for _ in range(0,len(b_val),2)]
 
-	# initialize diagonals depending on character
+	# initialize diagonals depending on character, these are basically base cases
 	for i in range(len(t)):
 		t[i][i] = 1 if b_val[i*2] == "1" else 0
 		f[i][i] = 0 if b_val[i*2] == "1" else 1
-
+	# iterate thorugh each operator
 	for op in range(1,len(t)):
+
 		i=0
+		# all chars to the rightnof op
 		for j in range(op,len(t)):
-			#t[i][j] = f[i][j] = 0
+			# all chars to the left of op
 			for g in range(op):
 				
 				k = i+g
@@ -3526,3 +3528,78 @@ def boolean_evaluation_dp(b_val, result):
 
 r = boolean_evaluation_dp("1^0|0|1",True)
 print(r)
+
+#---------------------------------------------------------------------------------------------------------
+# 9.1 Stock Data: Imagine you are building some sort of service that will be called by up to 1,000 client
+# applications to get simple end-of-day stock price information (open, close, high, low). You may
+# assume that you already have the data, and you can store it in any format you wish. How would
+# you design the client-facing service that provides the information to client applications? You are
+# responsible for the development, rollout, and ongoing monitoring and maintenance of the feed.
+# Describe the different methods you considered and why you would recommend your approach.
+# Your service can use any technologies you wish, and can distribute the information to the client
+# applications in any mechanism you choose.
+
+# Ans: We could use a a variety of solutions. A fancy way to distribute the data would be building a front end 
+# application, in something like React, and therefore controlling the way in which our data is given to the client(s). 
+# We would store our data in some back end DB/DataStore and write procedures that are callable by the end users in our 
+# front end application. We use MERN or whatever other type of stack to get everything flowing together. This approach seams
+# a bit of an overkill, if we are not looking to stricly build a product experience for the user. Alternatively, we could just let
+# the end users plug in to or access our DB (SQL,noSQL, etc), and take it themselves from there. Obviously we would limit what they 
+# are and are not able to do with the DB, but at minimum we would give them read privilages. This solution allows the client(s) to 
+# tailor their own custom data extraction methods, and offers more breadth in what they can't and cant do with the day, of course it 
+# is also a further burden on the client(s).
+
+
+#---------------------------------------------------------------------------------------------------------
+# 9.2 Social Network: How would you design the data structures for a very large social network like
+# Facebook or Linkedln? Describe how you would design an algorithm to show the shortest path
+# between two people (e.g., Me-> Bob-> Susan-> Jason-> You).
+
+# Ans: Now adays probably best to use a graph structure, specfically a Graph Neural Net. Can use an implementation of something 
+# like PINSAGE or any other popular GNN used for recommender system. This sort of structure will allow you to implement sophisticated
+# deep learning techniques within the entire social network. Of course a much more fundamental approach has to be taken into building
+# databases, client side methods, server side code, and just efficient and clean way in which a scalable product would be built upon.
+# For shortest path, just use BFS (djikstra's)
+
+# Time Complexity: O(V+E), Space Complexity: O(V) -> maybe O(V^2)
+def shortest_path(graph, user1, user2):
+	visited={user1}
+	queue=[user1]
+
+	while queue:
+		path = queue.pop(0)
+		vertex = path[-1]
+		if  vertex== user2: return path
+		for neighbor in graph[vertex]:
+			if  neighbor not in visited:
+				queue.append(path+[vertex])
+				visited.add(neighbor)
+	return None
+# 0->1->2
+# Time Complexity: O(V+E), Space Complexity: O(V)
+def shortest_path(graph, user1, user2):
+	
+	def helper():
+		visited={user1}
+		queue=[user1]
+
+		while queue:
+			vertex = queue.pop(0)
+			if  vertex== user2: return True
+			for neighbor in graph[vertex]:
+				if  neighbor not in visited:
+					queue.append(vertex)
+					visited.add(neighbor)
+					pred[neighbor] = vertex
+		return False
+
+	pred = [-1 for _ in range(len(graph))]
+	if not helper(): return None
+	
+	path=[user2]
+	idx=user2
+	while pred[idx]!=-1:
+		path.append(pred[idx])
+		idx = pred[idx]
+	return reversed(path)
+
