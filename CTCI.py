@@ -3526,8 +3526,8 @@ def boolean_evaluation_dp(b_val, result):
 
 	return t[0][-1] if result else f[0][-1]
 
-r = boolean_evaluation_dp("1^0|0|1",True)
-print(r)
+#r = boolean_evaluation_dp("1^0|0|1",True)
+#print(r)
 
 #---------------------------------------------------------------------------------------------------------
 # 9.1 Stock Data: Imagine you are building some sort of service that will be called by up to 1,000 client
@@ -3603,3 +3603,182 @@ def shortest_path(graph, user1, user2):
 		idx = pred[idx]
 	return reversed(path)
 
+
+#---------------------------------------------------------------------------------------------------------
+# 10.1 Sorted Merge: You are given two sorted arrays, A and B, where A has a large enough buffer at the
+# end to hold B. Write a method to merge B into A in sorted order.
+
+#Time Complexity: O(max(A,B)) where A and B are # elements in a and b respectively, Space Complexity: O(1)
+def sorted_merge(a,b):
+
+	i,idx,j = len(a)-1, len(a)-1, len(b)-1
+	while a[i] is None: i-=1
+	while i>=0 and j>=0:
+		if a[i]>b[j]: 
+			a[idx] = a[i]
+			i-=1
+		else:
+			a[idx] = b[j]
+			j-=1
+		idx-=1
+
+	while i>=0:
+		a[idx] = a[i]
+		i-=1
+		idx-=1
+	while j>=0:
+		a[idx] = a[j]
+		j-=1
+		idx-=1
+
+	return a
+def sorted_merge_cleaner(a,b):
+
+	idx,j = len(a)-1, len(b)-1
+	i = idx-j-1
+	while j>=0:
+		if a[i]>b[j]: 
+			a[idx] = a[i]
+			i-=1
+		else:
+			a[idx] = b[j]
+			j-=1
+		idx-=1	
+	return a
+a= [1,2,5,9,23,45,None,None,None,None,None,None]
+b= [2,6,18,28,32,56]
+
+#print(sorted_merge_cleaner(a,b))
+
+#---------------------------------------------------------------------------------------------------------
+# radix sort implementation
+#Time Complexity: O(N) O(d(N+k)), Space Complexity: O(N)
+def radix_sort(arr):
+
+	def counting_sort(exp):
+		temp = [0 for _ in range(len(arr))]
+		count = [0 for _ in range(10)]
+		for i in range(len(arr)):
+			idx = arr[i]//exp
+			count[idx%10] +=1
+		for i in range(1,10):
+			count[i]+=count[i-1]
+		for i in range(len(arr)-1,-1,-1):
+			idx = arr[i]//exp
+			temp[count[idx%10]-1] = arr[i]
+			count[idx%10] -=1
+		for i in range(len(arr)):
+			arr[i] = temp[i]
+
+	maxN = max(arr)
+	exp = 1
+	while maxN:
+		counting_sort(exp)
+		exp = exp*10
+		maxN=maxN//10
+
+#arr = [254,33, 656, 33, 2, 590, 99]
+#radix_sort(arr)
+#print(arr)
+
+#---------------------------------------------------------------------------------------------------------
+# 10.2  Group Anagrams: Write a method to sort an array of strings so that all the anagrams are next to
+# each other.
+
+# Time Complexity: O(N*klog(k)) where k = max string length, Space Complexity: O(N)
+def group_anagrams(strings):
+
+	sord = {}
+	for i in range(len(strings)):
+		s = ''.join(sorted(strings[i]))
+		if s in sord: sord[s].append(strings[i])
+		else: sord[s] = [strings[i]]
+		strings[i] = s
+	i = 0
+	for k,v in sord.items():
+		for word in v:
+			strings[i] = word
+			i+=1
+
+#s = ['ayz', 'bkj','tfv', 'zya', 'vft']
+#group_anagrams(s)
+#print(s)
+
+#---------------------------------------------------------------------------------------------------------
+# 10.3 Search in Rotated Array: Given a sorted array of n integers that has been rotated an unknown
+# number of times, write code to find an element in the array. You may assume that the array was
+# originally sorted in increasing order.
+# EXAMPLE
+# Input: find 5 in {15, 16, 19, 20, 25, 1, 3, 4, 5, 7, 10, 14}
+# Output: 8 (the index of 5 in the array)
+
+# Time Complexity: O(logN), Space Complexity: O(1)
+def search_in_rotated_array(arr, element):
+	
+	i,j = 0, len(arr)-1
+	while i<=j:
+		mid = (i+j)//2
+		if arr[mid] == element: return mid
+		# if left side is ordered correct
+
+		if arr[i]<=arr[mid]:
+			if arr[i]<=element<=arr[mid]: j = mid-1
+			else: i = mid+1
+		# if right side is ordered correct
+		else:
+			if arr[mid]<=element<=arr[j]: i = mid+1
+			else: j = mid-1
+
+	
+	return None
+'''
+a=[16, 19, 20, 25, 1, 3, 4, 5, 7, 10, 14, 15]
+b=[14, 15, 16, 19, 20, 25, 1, 3, 4, 5, 7, 10]
+c=[15, 16, 19, 20, 25, 1, 3, 4, 5, 7, 10, 14]
+d=[10, 14, 15, 16, 19, 20, 25, 1, 3, 4, 5, 7]
+print(search_in_rotated_array(a,5))
+print(search_in_rotated_array(b,16))
+print(search_in_rotated_array(c,15))
+print(search_in_rotated_array(d,25))
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 10.4 Sorted Search, No Size: You are given an array-like data structure Listy which lacks a size
+# method. It does, however, have an elementAt (i) method that returns the element at index i in
+# 0(1) time. If i is beyond the bounds of the data structure, it returns -1. (For this reason, the data
+# structure only supports positive integers.) Given a Listy which contains sorted, positive integers,
+# find the index at which an element x occurs. If x occurs multiple times, you may return any index.
+
+# Time Complexity: O(logN), Space Complexity: O(1)
+def sorted_search_no_size(arr,x):
+
+	if not arr: return None
+	def binary_search_mod(l,h,s):
+		if h<l: return None
+
+		mid = (l+h)//2
+		if elementAt(mid)==s: return mid
+		if elementAt(mid)>s or elementAt(mid)==-1: return binary_search_mod(l,mid-1,s)
+		else: return binary_search_mod(mid+1,h,s)
+
+	def elementAt(idx):
+		if idx>len(arr)-1 : return -1
+		return arr[idx]
+
+	length=1
+	while elementAt(length-1) != -1:
+		length = length*2
+
+	return binary_search_mod(0,length-1,x)
+
+#a=[1,1,1,1,2]
+#a = [1,1,1,1,4,7,9,15,27,33,43,53,63,73,83,101,123,125,127,128,129,130,131,132,133,134,135,136,137,138,139,140,140,140,140,141,141,500]
+#print(len(a))
+#print(sorted_search_no_size(a,2))
+
+#---------------------------------------------------------------------------------------------------------
+# 10.5 Sparse Search: Given a sorted array of strings that is interspersed with empty strings, write a
+# method to find the location of a given string.
+# EXAMPLE
+# Input: ball, {"at", "", "", "", "ball", "", "", "car", "", "", "dad", "", ""}
+# Output: 4
