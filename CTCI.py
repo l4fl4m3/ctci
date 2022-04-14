@@ -1557,6 +1557,7 @@ class BST:
 		else: 
 			root.right = self.insertHelper(root.right,val)
 			root.size+=1
+		return root
 
 	def find(self,val):
 		if not val: return None
@@ -1565,8 +1566,8 @@ class BST:
 	def findHelper(self, root, val):
 		if not root: return None
 		if root.val == val: return root
-		if val <= root.val: self.findHelper(root.left)
-		self.findHelper(root.right)
+		if val <= root.val: self.findHelper(root.left, val)
+		self.findHelper(root.right, val)
 	
 	def delete(self,val):
 		if not val: return None
@@ -3782,3 +3783,236 @@ def sorted_search_no_size(arr,x):
 # EXAMPLE
 # Input: ball, {"at", "", "", "", "ball", "", "", "car", "", "", "dad", "", ""}
 # Output: 4
+
+#Time Complexity: O(N) impossible for less than O(N) in worst case, Space Complexity: O(1)
+def sparse_search(arr,string):
+
+	def binary_search_mod(l,h,s):
+		if h<l: return None
+		mid=(l+h)//2
+		if arr[mid]=="":
+			new_mid_l, new_mid_r = mid-1, mid+1
+			while True:
+				if new_mid_l<l and new_mid_r>h: return None
+				if new_mid_l>=l and arr[new_mid_l]!="":
+					mid = new_mid_l
+					break
+				if new_mid_r<=h and arr[new_mid_r]!="":
+					mid = new_mid_r
+					break
+				new_mid_l-=1
+				new_mid_r+=1
+			'''
+			while arr[new_mid_l]=="" and new_mid_l>l: new_mid_l-=1
+			while arr[new_mid_r]=="" and new_mid_r<h: new_mid_r+=1
+			if arr[new_mid_l]:
+				if arr[new_mid_l]==s: 
+					return new_mid_l
+				if arr[new_mid_l]>s: return binary_search_mod(l,new_mid_l-1,s)
+			if arr[new_mid_r]:
+				if arr[new_mid_r]==s: return new_mid_r
+				if arr[new_mid_r]<s: return binary_search_mod(new_mid_r+1,h,s)
+			return None
+			'''
+		if arr[mid]==s: return mid
+		if arr[mid]>s: return binary_search_mod(l,mid-1,s)
+		if arr[mid]<s: return binary_search_mod(mid+1,h,s)
+	
+	if string=="": return None
+	return binary_search_mod(0,len(arr)-1,string)
+		
+
+#a = ["at", "", "", "", "ball", "", "", "car", "", "", "dad", "", ""]
+#print(sparse_search(a,""))
+
+#---------------------------------------------------------------------------------------------------------
+# 10.6 Sort Big File: Imagine you have a 20 GB file with one string per line. Explain how you would sort
+# the file.
+
+# Ans: Split and parallelize sort process so it can run on available memory across multiple machines, 
+# then merge the sorted files, basically divide and conquer, but with parallelization. You can also just split into sizes
+# that are able to be held in local ram, sort, and then merge all sorted files, but this will take a long time. Faster to
+# do it via parallelization, but this will obviously require a bit more work.
+
+#---------------------------------------------------------------------------------------------------------
+# 10.7 Missing Int: Given an input file with four billion non-negative integers, provide an algorithm to
+# generate an integer that is not contained in the file. Assume you have 1 GB of memory available for
+# this task.
+# FOLLOW UP
+# What if you have only 1O MB of memory? Assume that all the values are distinct and we now have
+# no more than one billion non-negative integers.
+
+# assuming input is int (uses 32 bits), in 32 bits we have 2^32 distinct ints (this is >4 bill) and 2^31 non-negative ints (<4 bill), 
+# therefore there are dups. 1Gb memory = 8 billion bits, so enough memory to map.
+# So we can use bitmap/bitarray to, and go through all four billion ints from file, and and set bitarray index equivalent to number to
+# true for each number, then we we iterate through the bitarray from the beginning, and the first 0(false) value we find is a valid
+# integer that is not in the file
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def missing_int(input_file):
+
+	num_bits = 4_000_000_000
+	bit_vector = 1<< num_bits
+	for num in input_file:
+		bit_vector  = bit_vector| 1<<num
+	
+	for i in range(num_bits):
+		if not bit_vector & 1<<i: return i
+
+#test_file=[0,1,2,3,4,5,6,7,8,9,10,12]
+#print(missing_int(test_file))
+
+#can divide 4bill by into x blocks of 1000, we get 4 mb of space used. Therefore we will have 1000 buckets
+def missing_int_followup(input_file):
+	
+	num_bits = 4_000_000_000
+	one_mb_bits = 1_000_000
+
+	i=0
+	for num in input_file:
+		bit_vector  = bit_vector| 1<<num
+	
+		for i in range(num_bits):
+			if not bit_vector & 1<<i: return i
+
+#test_file=[0,1,2,3,4,5,6,7,8,9,10,12]
+#print(missing_int_followup(test_file))
+
+#---------------------------------------------------------------------------------------------------------
+# 10.8 Find Duplicates: You have an array with all the numbers from 1 to N, where N is at most 32,000. The
+# array may have duplicate entries and you do not know what N is. With only 4 kilobytes of memory
+# available, how would you print all duplicate elements in the array?
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def find_duplicates(arr):
+	four_kb_bits = 8*4*(2**10) # this is greater than 32000
+	bit_vector = 1<<four_kb_bits
+
+	for n in arr:
+		check = bit_vector & 1<<n
+		if check: print(n)
+		else: bit_vector = bit_vector | 1<<n
+
+#test_file=[0,1,2,3,4,5,5,6,7,8,9,10,10,11,11,12]
+#ind_duplicates(test_file)
+
+#---------------------------------------------------------------------------------------------------------
+# 10.9 Sorted Matrix Search: Given an M x N matrix in which each row and each column is sorted in
+# ascending order, write a method to find an element.
+#
+# 1  2  3  4
+# 5  6  7  8
+# 9  10 11 12
+# 13 14 15 16
+
+# Could do binary search on each row -> O(m*logn)
+
+# Time Complexity: O(m+n), Space Complexity: O(1)
+def sorted_matrix_search(m,s):
+
+	def helper(r,c,s):
+
+		if c<0 or r>len(m)-1: return None
+		if m[r][c]==s: return (r,c)
+		elif s < m[r][c]: return helper(r,c-1,s)
+		elif s > m[r][c]: return helper(r+1,c,s)
+
+		return None
+
+
+	return helper(0,len(m[0])-1,s)
+
+#a = [[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12], [13, 14, 15, 16]]
+#print(sorted_matrix_search_naive(a,7))
+
+#---------------------------------------------------------------------------------------------------------
+# 10.10 Rank from Stream: Imagine you are reading in a stream of integers. Periodically, you wish
+# to be able to look up the rank of a number x (the number of values less than or equal to x).
+# Implement the data structures and algorithms to support these operations. That is, implement
+# the method track(int x), which is called when each number is generated, and the method
+# getRankOfNumber(int x), which returns the number of values less than or equal to x (not
+# including x itself).
+# EXAMPLE
+# Stream(in order of appearance): 5, 1, 4, 4, 5, 9, 7, 13, 3
+# getRankOfNumber(1) = 0
+# getRankOfNumber(3) = 1
+# getRankOfNumber(4) = 3
+
+class TreeNode:
+	def __init__(self,val):
+		self.val = val
+		self.left = None
+		self.right = None
+		self.size = 1
+
+	def incrementSize(self):
+		self.size+=1
+	
+class BST:
+	def __init__(self):
+		self.root = None
+
+	def add(self,x):
+		if not self.root: self.root=TreeNode(x)
+		else: self.addHelper(self.root,x)
+
+	def addHelper(self, root, x):
+		if not root: return TreeNode(x)
+		if x<=root.val: 
+			root.left = self.addHelper(root.left, x)
+			root.size+=1
+		else:  
+			root.right = self.addHelper(root.right, x)
+			root.size+=1
+		return root
+
+	def find(self,val):
+		if not val: return None
+		return self.findHelper(self.root,val)
+	
+	def findHelper(self, root, val):
+		if not root: return None
+		if val == root.val: return root
+		if val < root.val: return self.findHelper(root.left, val)
+		else: return self.findHelper(root.right, val)
+
+	def getRank(self,val):
+		if not val: return None
+		return self.rankHelper(self.root,val)
+
+	def rankHelper(self, root, val):
+		#if not root: return 0
+		if val == root.val:
+			if not root.left: return 0
+			return root.left.size
+		if val < root.val:
+			return self.rankHelper(root.left,val)
+		else:
+			if not root.left: return 1+ self.rankHelper(root.right,val)
+			return 1 + root.left.size + self.rankHelper(root.right,val)
+
+def rank_of_stream(stream):
+	bst = BST()
+
+	def track(x):
+		bst.add(x)
+
+	def getRankOfNumber(x):
+		return bst.getRank(x)
+
+	for i in range(len(stream)):
+		track(stream[i])
+
+	for i in range(len(stream)):
+		r = getRankOfNumber(stream[i])
+		print(f"Rank of {stream[i]}: {r}")
+		
+stream = [5, 1, 4, 4, 5, 9, 7, 13, 3]
+rank_of_stream(stream)
+
+
+
+
+
+	
+
