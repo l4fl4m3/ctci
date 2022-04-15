@@ -3977,26 +3977,30 @@ class BST:
 		else: return self.findHelper(root.right, val)
 
 	def getRank(self,val):
-		if not val: return None
 		return self.rankHelper(self.root,val)
 
 	def rankHelper(self, root, val):
-		#if not root: return 0
+		if not root: return -1
 		if val == root.val:
 			if not root.left: return 0
 			return root.left.size
 		if val < root.val:
-			return self.rankHelper(root.left,val)
+			left = self.rankHelper(root.left,val)
+			return left if left>=0 else -1
 		else:
-			if not root.left: return 1+ self.rankHelper(root.right,val)
-			return 1 + root.left.size + self.rankHelper(root.right,val)
+			if not root.right: return -1
+			right = self.rankHelper(root.right,val)
+			if right ==-1: return -1
+			if not root.left: return 1 + right
+			return 1 + root.left.size + right
 
 def rank_of_stream(stream):
 	bst = BST()
 
+	#Time Complexity: O(N)
 	def track(x):
 		bst.add(x)
-
+	# Time Complexity: O(N)
 	def getRankOfNumber(x):
 		return bst.getRank(x)
 
@@ -4006,13 +4010,198 @@ def rank_of_stream(stream):
 	for i in range(len(stream)):
 		r = getRankOfNumber(stream[i])
 		print(f"Rank of {stream[i]}: {r}")
+
+	r = getRankOfNumber(21)
+	print(f"Rank of {2}: {r}")
 		
-stream = [5, 1, 4, 4, 5, 9, 7, 13, 3]
-rank_of_stream(stream)
+#stream = [5, 1, 4, 4, 5, 9, 7, 13, 3]
+#rank_of_stream(stream)
+
+#---------------------------------------------------------------------------------------------------------
+# 10.11 Peaks and Valleys: In an array of integers, a "peak" is an element which is greater than or equal
+# to the adjacent integers and a "valley" is an element which is less than or equal to the adjacent
+# integers. For example, in the array {5, 8, 6, 2, 3, 4, 6}, {8, 6} are peaks and {5, 2} are valleys. Given an
+# array of integers, sort the array into an alternating sequence of peaks and valleys.
+# EXAMPLE
+# Input: {5, 3, 1, 2, 3}
+# Output: {5, 1, 3, 2, 3}
 
 
+# 6,6,5,4,3,2,1 -> 6,1,6,2,5,3,4
+# 6,6,5,4,3,3,2,1 -> 6,1,6,2,5,3,4,3
+# 5,5,5,3,3,3,3,2,1 -> 5,1,5,3,5,3,2,3,3
 
-
-
+# Time Complexity: O(NLogN), Space Complexity: O(N)
+def peaks_and_valleys_naive(arr):
 	
+	temp = sorted(arr, reverse=True)
+	i,j=0,((len(arr)-1)//2)+1
+	while j<len(arr):
+		arr[i*2] = temp[i]
+		arr[(i*2)+1] = temp[j]
+		i+=1
+		j+=1
+	if len(arr)%2:
+		arr[2*i] = temp[i]
 
+# Time Complexity: O(NLogN), Space Complexity: O(1), since peak/element based on <= or >= duplciates dont affect
+def peaks_and_valleys_naive_2(arr):
+	arr.sort()
+	i=1
+	while i<len(arr):
+		arr[i],arr[i-1] = arr[i-1],arr[i]
+		i+=2
+
+# Time Complexity: O(N), Space Complexity: O(1)
+def peaks_and_valleys(arr):
+
+	i=0
+	while i<len(arr):
+		if i>0 and arr[i]<arr[i-1]: arr[i],arr[i-1]=arr[i-1],arr[i]
+		if i<len(arr)-1 and arr[i]<arr[i+1]: arr[i],arr[i+1]=arr[i+1],arr[i]
+		i+=2
+
+'''
+a = [8, 5, 4, 3 , 3, 1, 6, 5, 7]
+peaks_and_valleys(a)
+print(a)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 11.1 Mistake: Find the mistake(s) in the following code:
+# unsigned int i;
+# for (i = 100; i >= 0; --i)
+# 	printf("%d\n", i);
+
+# Ans: Unsigned int is always greater than or equal to zero, so infinite for loop. And use %u instead of %d, since unsigned int.
+# for (i = 100; i > 0; --i)
+# 	printf("%u\n", i);
+
+#---------------------------------------------------------------------------------------------------------
+# 14.1 Multiple Apartments: Write a SQL query to get a list of tenants who are renting more than one
+# apartment.
+'''
+SELECT TenantName from Tenants INNER JOIN (SELECT TenantId from AptTenants GROUP BY TenantId HAVING count(*)>1) C
+	ON Tenants.TenantId = C.TenantId
+
+
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.1 Number Swapper: Write a function to swap a number in place (that is, without temporary variables).
+
+# Time Complexity: O(1), Space Complexity: O(1)
+def number_swapper(a,b):
+
+	a = a-b
+	b = b+a
+	a = b-a
+
+	return a,b
+
+def number_swapper_bit(a,b):   
+
+	a = a^b
+	b = b^a
+	a = b^a
+
+	return a,b
+
+'''
+n1 = 9
+n2 = 3
+print(n1)
+print(n2)
+print(number_swapper_bit(n1,n2))
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.2 Word Frequencies: Design a method to find the frequency of occurrences of any given word in a
+# book. What if we were running this algorithm multiple times?
+
+# Time Complexity: O(N), Space Complexity: O(N)
+cache={}
+def word_frequencies(book,word):
+
+	if word in cache: return cache[word]
+	freq=0
+	for w in book:
+		if w == word:freq+=1
+	cache[word]=freq
+	return freq
+
+#book=['hello', 'there', 'my' , 'friend', 'oh', 'my', 'friend']
+#print(word_frequencies(book,"friend"))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.3 Intersection: Given two straight line segments (represented as a start point and an end point),
+# compute the point of intersection, if any.
+
+# Time Complexity: O(1), Space Complexity: O(1)
+import math
+def intersection(line1, line2):
+
+	x1_a, y1_a, x2_a, y2_a = line1[0][0],line1[0][1],line1[1][0],line1[1][1]
+	x1_b, y1_b, x2_b, y2_b = line2[0][0],line2[0][1],line2[1][0],line2[1][1]
+
+	# left to right for line1
+	if x1_a>x2_a:
+		x1_a,x2_a = x2_a,x1_a
+		y1_a,y2_a = y2_a,y1_a
+	# left to right for line2
+	if x1_b>x2_b:
+		x1_b,x2_b=x2_b,x1_b
+		y1_b,y2_b=y2_b,y1_b
+	# line1 always before line2 on x-axis
+	if x1_a>x1_b:
+		x1_a,x1_b=x1_b,x1_a
+		y1_a,y1_b=y1_b,y1_a
+		x2_a,x2_b=x2_b,x2_a
+		y2_a,y2_b=y2_b,y2_a
+
+	if x2_a-x1_a != 0:
+		slope1 = (y2_a-y1_a)/(x2_a-x1_a)
+		b1 = y1_a - (slope1*x1_a)
+	else:
+		slope1 = float('inf')
+		b1 = float('inf')
+
+	if x2_b-x1_b != 0:
+		slope2 = (y2_b-y1_b)/(x2_b-x1_b)
+		b2 = y1_b - (slope2*x1_b)
+	else:
+		slope2 = float('inf')
+		b2 = float('inf')
+
+	diff_slopes = slope1 - slope2
+	diff_b = b1-b2
+
+	if slope1 == slope2:
+		if math.isnan(diff_b):
+			if x1_a!=x1_b: return None
+			if y1_a<=y1_b and y1_b<=y2_a: return (x1_a,y1_b)
+			if y1_b<=y1_a and y1_a<=y2_b: return (x1_a,y1_a)
+			return None
+
+		if diff_b: return None
+		if x1_b<=x2_a: return (x1_b,y1_b)
+		else: return None
+	
+	if x2_a-x1_a != 0 and x2_b-x1_b != 0:
+		x_int = (-1*diff_b)/diff_slopes
+		y_int = slope1*x_int+ b1
+	elif not x2_a-x1_a: 
+		x_int = x1_a
+		y_int = slope2*x_int+ b2
+	elif not x2_b-x1_b: 
+		x_int = x1_b
+		y_int = slope1*x_int+ b1
+
+	if x1_a<=x_int<=x2_a  and x1_b<=x_int<=x2_b  and min(y1_a,y2_a)<=y_int<=max(y1_a,y2_a) and min(y1_b,y2_b)<=y_int<=max(y1_b,y2_b):
+		return (x_int,y_int)
+	
+	return None
+
+print(intersection(((0,0),(0,5)),((0,6),(0,8))))
+print(intersection(((0,0),(0,5)),((0,1),(2,3))))
+print(intersection(((0,0),(2,2)),((1,1),(4,4))))
+print(intersection(((0,5),(2,1)),((0,-2),(3,4))))
