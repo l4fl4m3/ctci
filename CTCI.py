@@ -4,10 +4,11 @@
 # Naive solution
 from calendar import c
 from inspect import _ParameterKind, stack
-from re import I
+from re import I, X
 from tkinter import N
 from matplotlib.pyplot import box
 from numpy import char
+from psutil import OSX
 
 
 def question_one_naive(string):
@@ -4201,7 +4202,431 @@ def intersection(line1, line2):
 	
 	return None
 
+'''
 print(intersection(((0,0),(0,5)),((0,6),(0,8))))
 print(intersection(((0,0),(0,5)),((0,1),(2,3))))
 print(intersection(((0,0),(2,2)),((1,1),(4,4))))
 print(intersection(((0,5),(2,1)),((0,-2),(3,4))))
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.4 Tic Tac Win: Design an algorithm to figure out if someone has won a game of tic-tac-toe.
+
+# Time Complexity: O(m*n), Space Complexity: O(1)
+# added a hashtable with unique hash if running on reapeateded grids
+
+def tic_tac_win(grid):
+	def get_hash():
+		hash = 0
+		for i in range(len(grid)):
+			for j in range(len(grid[0])):
+				if grid[i][j] == 'X': hash = hash*3 + 1
+				elif grid[i][j] == 'O':hash = hash*3 + 2
+				#else: hash = hash + (3**(i+j))*val
+		return hash
+
+	def helper(i,j,count_x,count_o):
+
+		if count_x == 3 or count_o == 3: return True
+		if i<0 or j<0 or i>len(grid)-1 or j>len(grid)-1: return False
+		if (i==1 and j==1) and ((grid[0][0]==grid[1][1] and grid[2][2]==grid[1][1]) or (grid[0][2]==grid[1][1] and grid[2][0]==grid[1][1])): return True
+		if grid[i][j] =='X': return helper(i+1,j,count_x+1,0) or helper(i,j+1,count_x+1,0)
+		if grid[i][j] =='O': return helper(i+1,j,0,count_o+1) or helper(i,j+1,0,count_o+1)
+	
+		return helper(i+1,j,0,0) or helper(i,j+1,0,0)
+
+	hash = get_hash()
+	if hash in cache: return cache[hash]
+	ans = helper(0,0,0,0)
+	cache[hash] = ans
+	return ans
+#cache={}
+
+# Time Complexity: O(m*n), Space Complexity: O(m+n)
+def tic_tac_win_clean(grid):
+	r = [0 for _ in range(len(grid))]
+	c = [0 for _ in range(len(grid))]
+	d = [0,0]
+
+	for i in range(len(grid)):
+		for j in range(len(grid)):
+
+			if grid[i][j]=="X": val = 1 
+			elif grid[i][j]=="O": val = -1
+			else: val = 0
+
+			if not i-j: d[0]+=val
+			if i+j+1==len(grid): d[1]+=val
+
+			r[i]+=val
+			c[j]+=val
+
+	for score in r: 
+		if abs(score)==len(grid): return True
+	for score in c:
+		if abs(score)==len(grid): return True
+	for score in d:
+		if abs(score)==len(grid): return True 
+	return False
+
+'''
+
+a=[["X","O","X"],["O","X","O"],["X","O","O"]]
+b=[["X","O","X"],["O","X","O"],["O","O","X"]]
+c=[["X","O","O"],["X","O","X"],["X","X","O"]]
+d=[["X","O","O"],["X","X","X"],["O","X","O"]]
+e=[["X","O","O"],["O","X","O"],["X","X","O"]]
+f=[["O","X","O"],["X","O","X"],["O","X","X"]]
+g=[["O","X","O"],["X","O","X"],["X","O","X"]]
+
+print(tic_tac_win_clean(a))
+print(tic_tac_win_clean(b))
+print(tic_tac_win_clean(c))
+print(tic_tac_win_clean(d))
+print(tic_tac_win_clean(e))
+print(tic_tac_win_clean(f))
+print(tic_tac_win_clean(g))
+
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.5 Factorial zeros: Write an algorithm which computes the number of trailing zeros in n factorial.
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def factorial_zeros(n):
+
+	# zero when (2*5), since 2<5, then for a factorial #zeros is n//5, plus x-1 for 5^x <= n (x>0)
+	if n<0: return None
+	dp = [0 for _ in range(n+1)]
+	for i in range(1,n+1):
+		dp[i] = i//5 + dp[i//5]
+	return dp[-1]
+
+# Time Complexity: O(log5N) -> logbase5(N), Space Complexity: O(1)
+def factorial_zeros(n):
+	if n<0: return None
+	count = 0
+	i=5
+	while n//i>0:
+		count+=n//i
+		i = i*5
+	return count
+
+#print(factorial_zeros(50))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.6 Smallest Difference: Given two arrays of integers, compute the pair of values (one value in each
+# array) with the smallest (non-negative) difference. Return the difference.
+# EXAMPLE
+# Input: {1, 3, 15, 11, 2}, {23, 127, 235, 19, 8}
+# Output: 3. That is, the pair (11, 8).
+
+# Time Complexity: O(NlogN) where N is maxlength(arr1,arr2) or just O(AlogA + BlogB), Space Complexity: O(1)
+def smallest_difference_naive(arr1, arr2):
+
+	arr1.sort()
+	arr2.sort() 
+	i,j = 0,0
+	min = float('inf')
+	while i<len(arr1) and j<len(arr2):
+		diff = abs(arr1[i]-arr2[j])
+		if diff< min:min = diff 
+		if not diff: return diff
+		if arr1[i]<arr2[j]: i+=1
+		else:j+=1
+	return min
+	
+#a = [1, 3, 15, 11, 2]
+#b = [23, 127, 235, 19, 8]
+
+#print(smallest_difference_naive(a,b))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.7 Number Max: Write a method that finds the maximum of two numbers. You should not use if-else
+# or any other comparison operator.
+
+# Time Complexity: O(1), Space Complexity: O(1)
+def number_max(num1, num2):
+
+	# this solution is a bit more complicated of an implementation to handle for overflow (we use 32-bit here)
+	diff = num1 - num2
+	sign_diff = (((1<<31)-diff) >> 31) &1
+	sign_num1 = (((1<<31)-num1) >> 31) &1
+	sign_num2 = (((1<<31)-num2) >> 31) &1
+	use_sign_num1 = sign_num1 ^ sign_num2
+	use_sign_check = ((1<<1)-1)^use_sign_num1 # flip result of (sign_num1 ^ sign_num2), same as 'not (sign_num1 ^ sign_num2)'
+	check = use_sign_num1*sign_num1 + use_sign_check*sign_diff
+	return (1-check)*num1 + check*num2
+
+#print(2**31 - 1)
+#print(number_max(2**31 - 1,-5))
+
+
+#---------------------------------------------------------------------------------------------------------
+# 16.8 English Int: Given any integer, print an English phrase that describes the integer (e.g., "One
+# Thousand, Two Hundred Thirty Four").
+
+# we will assume max and min ints are from -2^31 + 1 to 2^31 - 1 (inclusive)
+
+# Time Complexity: O(log10N) -> logbase10(N) where N=integer, Space Complexity: O(1)
+def english_int(integer):
+	dictionary = {  0:'zero', 1:'one', 2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven', 8:'eight', 9:'nine',
+					10:'ten', 11:'eleven', 12:'twelve', 13:'thirteen', 14:'fourteen', 15:'fifteen', 16:'sixteen',
+					17:'seventeen', 18:'eighteen', 19:'nineteen', 20:'twenty', 30:'thirty', 40:'forty', 50:'fifty', 
+					60:'sixty', 70:'seventy', 80:'eighty', 90:'ninety', 100: 'hundred', 1000:'thousand', 
+					1_000_000:'million', 1_000_000_000:'billion'
+				 }
+	if integer == 0: return dictionary[0]
+
+	def helper(num, div):
+
+		if not num: return None
+		if num in dictionary:
+			all.append(dictionary[num])
+			return
+
+		to_check = num - num%div
+		if not to_check or not div in dictionary: return helper(num,div/10) 
+		
+		if to_check>=100:
+			helper(to_check/div, div)
+			to_check = div
+
+		helper(to_check,div)
+		helper(num%div,div/10)
+			
+	all = []
+	if integer<0: 
+		all.append("negative")
+		integer*=-1
+	helper(integer,1_000_000_000)
+	return ' '.join(all)
+
+# Time Complexity: O(log10N) -> logbase10(N) where N=integer, Space Complexity: O(1)
+def english_int(integer):
+	dictionary = {  0:'zero', 1:'one', 2:'two', 3:'three', 4:'four', 5:'five', 6:'six', 7:'seven', 8:'eight', 9:'nine',
+					10:'ten', 11:'eleven', 12:'twelve', 13:'thirteen', 14:'fourteen', 15:'fifteen', 16:'sixteen',
+					17:'seventeen', 18:'eighteen', 19:'nineteen', 20:'twenty', 30:'thirty', 40:'forty', 50:'fifty', 
+					60:'sixty', 70:'seventy', 80:'eighty', 90:'ninety', 100: 'hundred', 1000:'thousand', 
+					1_000_000:'million', 1_000_000_000:'billion'
+				 }
+	if integer == 0: return dictionary[0]
+
+	def helper(num, multiplier):
+
+		if not num: return None
+
+		h = (num%1000)//100
+		t_1 = num%100//10
+		o = num%10
+
+		if multiplier>1: all.append(dictionary[multiplier])
+		if t_1 and o and (t_1*10 + o) in dictionary: all.append(dictionary[(t_1*10 + o)])
+		else: 
+			if o: all.append(dictionary[o])
+			if t_1: all.append(dictionary[t_1*10])
+
+		if h:all.extend([dictionary[100], dictionary[h]])
+
+		helper(num//1000, multiplier*1000)
+			
+	all = []
+	helper(abs(integer), 1)
+	if integer<0: all.append("negative")
+	return ' '.join(reversed(all))
+
+#a = -34_050_111_139
+#print(english_int(a))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.9 Operations: Write methods to implement the multiply, subtract, and divide operations for integers.
+# The results of all of these are integers. Use only the add operator.
+
+# Lots of rnadom edge cases
+
+def operations(int1, int2, op):
+
+	def negate(integer):
+		return ~integer+1 
+
+	def abs_val(integer):
+		if integer>=0: return integer
+		return negate(integer)
+
+	# Time Complexity: O(min(int1,int2)), Space Complexity: O(1)
+	def multiply(int1, int2):
+		if not int1 or not int2: return 0
+		if int1< int2: int2,int1 = int1, int2
+		neg = False
+		if (int1<0 and int2>0) or (int1>0 and int2<0): neg = True
+		sum = 0
+		for _ in range(abs_val(int2)): sum+=abs_val(int1)
+		return negate(sum) if neg else sum
+
+	# Time Complexity: O(1), Space Complexity: O(1)
+	def subtract(int1, int2):
+		if not int1 and not int2: return 0
+		if not int1: return multiply(-1, int2)
+		if not int2: return int1
+		return int1 + negate(int2)
+
+	# Time Complexity: O(N) -> O(int1/int2) = O(int1/1) = O(n) where n = int1 , Space Complexity: O(1)
+	def divide(int1, int2):
+
+		if not int2: return None
+		if not int1: return 0
+		neg = False
+		if (int1<0 and int2>0) or (int1>0 and int2<0): neg=True
+		count = 0
+		check = subtract(abs(int1), abs_val(int2))
+		while check>=0:
+			check = subtract(check, abs_val(int2))
+			count+=1
+
+		if check+abs_val(int2): return negate(count)-1 if neg else count
+		return negate(count) if neg else count
+
+	if op == 'm': return multiply(int1,int2)
+	if op == 's': return subtract(int1, int2)
+	if op == 'd': return divide(int1, int2)
+
+#print(operations(-8,-3,'d'))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.10 Living People: Given a list of people with their birth and death years, implement a method to
+# compute the year with the most number of people alive. You may assume that all people were born
+# between 1900 and 2000 (inclusive). If a person was alive during any portion of that year, they should
+# be included in that year's count. For example, Person (birth= 1908, death= 1909) is included in the
+# counts for both 1908 and 1909.
+
+# Time Complexity: O(N*R) R=100 (range), Space Complexity: O(R) = O(1)
+def living_people_brute(people):
+	if not people: return 0
+	years = [0 for _ in range(100+1)]
+	max_year = 0
+	max_count = 0
+	for person in people:
+		for i in range(person[0]-1900, person[1]-1900+1):
+			years[i] +=1
+
+	for i in range(len(years)):
+		if years[i]>max_count:
+			max_count = years[i]
+			max_year = i+1900
+	return max_year
+
+#p = [(1900,1957),(1904,1985),(1945,1955),(1980,2000),(1955,1980)]
+#print(living_people_brute(p))
+	
+# Time Complexity: O(N*logN), Space Complexity: O(N)
+def living_people(people):
+	if not people: return 0
+	births = sorted([people[i][0] for i in range(len(people))])
+	deaths = sorted([people[i][1] for i in range(len(people))])
+	print(births)
+	print(deaths)
+
+	max_year = 0
+	max_alive = 0
+	curr_alive = 0
+	j=0
+	for i in range(len(people)):
+		if births[i]<= deaths[j]: curr_alive +=1
+		if curr_alive>max_alive:
+			max_alive = curr_alive 
+			max_year = i
+		while births[i]>= deaths[j]:
+			curr_alive -= 1
+			j+=1
+	
+	return births[max_year],max_alive
+
+# Time Complexity: O(N + R) where R= range, Space Complexity: O(R)  # Note this is only more optimal than above depending on the case
+def living_people_optimal(people):
+
+	max_alive, curr_alive, max_year = 0,0,0 
+	alive = [0 for _ in range(100+2)]
+	for i in range(len(people)): alive[people[i][0]-1900]+=1 # increment for each birth year
+	for i in range(len(people)): alive[people[i][1]-1900+1] -=1 # decrement for each death year+1 (since death isnt reflected till next year)
+	for i in range(len(alive)): #can also go to len(alive)-1 since last element in alive is for overflow to handle end of range death
+		curr_alive+=alive[i]
+		if curr_alive>max_alive:
+			max_alive = curr_alive
+			max_year = i
+
+	return max_year+1900
+
+
+#p = [(1900,1957),(1904,1985),(1945,1955),(1980,2000),(1955,1980)]
+#print(living_people_optimal(p))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.11 Diving Board: You are building a diving board by placing a bunch of planks of wood end-to-end.
+# There are two types of planks, one of length shorter and one of length longer. You must use
+# exactly K planks of wood. Write a method to generate all possible lengths for the diving board.
+
+# Time Complexity: O(k^2), Space Complexity: O(k)
+def driving_board(k):
+
+	def helper(count,l,s):
+
+		if (count,l,s) in cache: return
+		if count == k: 
+			all.add(f"{l}L + {s}S")
+			return
+
+		helper(count+1,l+1,s)
+		helper(count+1,l,s+1)
+		cache.add((count,l,s))
+
+	all = set()
+	cache = set()
+	helper(0,0,0)
+	print(all)
+
+#driving_board(5)
+
+# Time Complexity: O(k), Space Complexity: O(k)
+def driving_board_optimal(k,l,s):
+	if l == s: return l*k
+
+	all = [] # or can use set
+	for i in range(k+1):
+		lo = k-i
+		sum = lo*l + i*s
+		all.append(sum)
+
+	return all
+
+#print(driving_board_optimal(5,3,7))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.11 XML Encoding: Since XML is very verbose, you are given a way of encoding it where each tag gets
+# mapped to a pre-defined integer value. The language/grammar is as follows:
+# Element --> Tag Attributes END Children END
+# Attribute --> Tag Value
+# END --> 0
+# Tag --> some predefined mapping to int
+# Value --> string value
+
+# Time Complexity: O(a + N*k) ? where a= # parent attributes N= num children k =most attr of any child, Space Complexity: O(a+ N*k) ?
+def xml_encoding(element):
+	
+	def helper(root):
+
+		res.append(root.code)
+
+		for a in root.attributes:
+			res.append(a.code)
+			res.append(a.val)
+		res.append(0)
+
+		if root.val and root.val != "": res.append(root.val)
+		else: 
+			for c in root.children: helper(c)
+
+		res.append(0)
+
+	res = []
+	helper(element)
+	return " ".join(res)
