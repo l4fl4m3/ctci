@@ -4601,7 +4601,7 @@ def driving_board_optimal(k,l,s):
 #print(driving_board_optimal(5,3,7))
 
 #---------------------------------------------------------------------------------------------------------
-# 16.11 XML Encoding: Since XML is very verbose, you are given a way of encoding it where each tag gets
+# 16.12 XML Encoding: Since XML is very verbose, you are given a way of encoding it where each tag gets
 # mapped to a pre-defined integer value. The language/grammar is as follows:
 # Element --> Tag Attributes END Children END
 # Attribute --> Tag Value
@@ -4630,3 +4630,340 @@ def xml_encoding(element):
 	res = []
 	helper(element)
 	return " ".join(res)
+
+#---------------------------------------------------------------------------------------------------------
+# 16.13 Bisect Squares: Given two squares on a two-dimensional plane, find a line that would cut these two
+# squares in half. Assume that the top and the bottom sides of the square run parallel to the x-axis.
+
+# Time Complexity: O(1), Space Complexity: O(1)
+def bisect_squares(s_a,s_b):
+	'''We will return tuple of form (slope, y-intercept, x-intercept if vertical line)'''
+
+	mid_a_x = (s_a[1][0] + s_a[0][0])/2
+	mid_a_y = (s_a[1][1] + s_a[0][1])/2
+
+	mid_b_x = (s_b[1][0] + s_b[0][0])/2
+	mid_b_y = (s_b[1][1] + s_b[0][1])/2
+
+	if (mid_b_x - mid_a_x) == 0: return (0,0,mid_a_x)
+
+	slope = (mid_b_y - mid_a_y)/(mid_b_x - mid_a_x)
+	y_intercept = mid_a_y - slope*mid_a_x
+
+	return (slope, y_intercept, 0)
+
+#a = ((0,1),(5,6))
+#b = ((3,1),(8,6))
+#a = ((0,0),(5,5))
+#b = ((0,5),(5,10))
+#a = ((0,0),(5,5))
+#b = ((1,5),(6,10))
+#print(bisect_squares(a,b))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.14 Best Line: Given a two-dimensional graph with points on it, find a line which passes the most
+# number of points.
+
+# X X X
+# X X X
+# X X X
+# X X X
+# X X X
+
+# Time Complexity: O(m*n), Space Complexity: O(m+n)
+def best_line(graph):
+	''' Returns tuple of form (number of points passed, line index, line type) '''
+	rows = [0 for _ in range(len(graph))]
+	cols = [0 for _ in range(len(graph[0]))]
+	diags_r = [0 for _ in range(len(graph)+len(graph[0])-1)]
+	diags_l = [0 for _ in range(len(graph)+len(graph[0])-1)]
+
+	for i in range(len(graph)):
+		for j in range(len(graph[0])):
+			d_r = i-j
+			d_l = i+j
+			val = graph[i][j]
+			if val and val == "X":
+				rows[i]+=1
+				cols[j]+=1
+				diags_r[d_r]+=1
+				diags_l[d_l]+=1
+
+	max_line = (0,None,None)
+	if max(rows)> max_line[0]: max_line = (max(rows), rows.index(max(rows)), 'r')
+	if max(cols)> max_line[0]: max_line = (max(cols), cols.index(max(cols)), 'c')
+	if max(diags_r)> max_line[0]: max_line = (max(diags_r), diags_r.index(max(diags_r)), 'd_r')
+	if max(diags_l)> max_line[0]: max_line = (max(diags_l), diags_l.index(max(diags_l)), 'd_l')
+
+	return max_line
+
+#a = [["X",None,None],["X","X",None],["X",None,"X"],["X",None,None],["X",None,None]]
+#print(best_line(a))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.15 Master Mind: The Game of Master Mind is played as follows:
+# The computer has four slots, and each slot will contain a ball that is red (R), yellow (Y), green (G) or
+# blue (B). For example, the computer might have RGGB (Slot #1 is red, Slots #2 and #3 are green, Slot
+# #4 is blue).
+# You, the user, are trying to guess the solution. You might, for example, guess YRGB.
+# When you guess the correct color for the correct slot, you get a "hit:' If you guess a color that exists
+# but is in the wrong slot, you get a "pseudo-hit:' Note that a slot that is a hit can never count as a
+# pseudo-hit.
+# For example, if the actual solution is RGBY and you guess GGRR , you have one hit and one pseudohit
+# Write a method that, given a guess and a solution, returns the number of hits and pseudo-hits.
+
+# Time Complexity: O(N), Space Complexity: O(C) -> O(1) where N=# number of slots and C=# of colors
+def master_mind(guess, solution):
+	dict = {}
+	hits, pseudo_hits = 0,0
+	for i in range(len(solution)):
+		if guess[i] == solution[i]: hits+=1
+		else: # only add to dict if not a hit, otherwise we would need to decrement hit
+			if solution[i] not in dict: dict[solution[i]] =1
+			else:dict[solution[i]]+=1
+	for i in range(len(guess)): 
+		if guess[i] in dict:
+			pseudo_hits+=1
+			dict[guess[i]]-=1
+			if dict[guess[i]]==0: dict.pop(guess[i])
+
+	return (hits,pseudo_hits)
+'''		
+g = 'GGRR'
+s = 'RGRY'
+print(master_mind(g,s))
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.16 Sub Sort: Given an array of integers, write a method to find indices m and n such that if you sorted
+# elements m through n , the entire array would be sorted. Minimize n - m (that is, find the smallest
+# such sequence).
+# EXAMPLE
+# Input: 1, 2, 4, 7, 10, 11, 7, 12, 6, 7, 16, 18, 19
+# Output: (3, 9)
+
+# Time Complexity: O(N^2), Space Complexity: O(1)
+def sub_sort_non_optimal(arr):
+	if len(arr)==1: return (0,0)
+	m,n = float('inf'),0
+	i,j = 0, len(arr)-1
+	max = arr[0]
+	for i in range(1,len(arr)):
+		if arr[i] < arr[i-1] or arr[i] <= max:
+			n=i
+			for j in range(n):
+				if arr[j] > arr[i]:
+					m = min(m,j)
+					max = arr[j]
+					break
+	return (m,n)
+'''
+a = [1, 2, 4, 7, 10, 11, 7, 12, 6, 7, 16, 18, 19]
+b = [1, 2, 4, 7, 10, 11, 12, 13, 3, 15, 2, 19, 6]
+print(sub_sort_non_optimal(b))'''
+
+# Time Complexity: O(N), Space Complexity: O(1)
+def sub_sort(arr):
+
+	if not arr: return None
+	if len(arr)==1: return (0,0)
+
+	min_v, max_v = float('inf'), float('-inf')
+	i,j=0,len(arr)-1
+	while i<len(arr)-1 and arr[i+1]>=arr[i]: i+=1
+	while j>0 and arr[j-1]<= arr[j]: j-=1
+	for a in range(j): max_v = max(max_v, arr[a])
+	for b in range(i+1,len(arr)): min_v = min(min_v, arr[b])
+
+	m,n=0,len(arr)-1
+	while arr[m]<= min_v: m+=1
+	while arr[n]>= max_v: n-=1
+
+	return (m,n)
+
+'''
+a = [1, 2, 4, 7, 10, 11, 7, 12, 6, 7, 16, 15, 19]
+b = [1, 2, 4, 7, 10, 11, 12, 13, 3, 15, 2, 19, 21]
+b = [21, 2, 4, 7, 10, 11, 12, 13, 3, 15, 2, 19, 23]
+print(sub_sort(b))'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.17 Contiguous Sequence: You are given an array of integers (both positive and negative). Find the
+# contiguous sequence with the largest sum. Return the sum.
+# EXAMPLE
+# Input: 2, -8, 3, -2, 4, -10
+# Output: 5 ( i. e • , { 3, -2, 4} )
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def contiguous_sequence_dp(arr):
+	if not arr: return None
+	dp = [0 for _ in range(len(arr))]
+	dp[0] = arr[0]
+	for i in range(1,len(arr)): dp[i] = max(dp[i-1]+arr[i], arr[i])
+	return max(dp)
+'''
+a = [2, -8, 3, -2, 4, -10]
+print(contiguous_sequence_dp(a))'''
+
+
+# this way seems useless, O(N^2)? and O(1)
+def contiguous_sequence(arr):
+
+	def helper(val,idx):
+		global max_v
+		if idx>= len(arr): return None
+		if val+arr[idx]>max_v: max_v=val+arr[idx]
+		helper(val+arr[idx], idx+1)
+
+	global max_v
+	max_v = float('-inf')
+	for i in range(len(arr)): helper(0, i)
+	return max_v
+'''
+a = [2, -8, 3, -2, 4, -10]
+print(contiguous_sequence(a))'''
+
+# Time Complexity: O(N), Space Complexity: O(1)
+def contiguous_sequence_dp_optimized(arr):
+	if not arr: return None
+	max_v = arr[0]
+	for i in range(1,len(arr)):
+		arr[i] = max(arr[i], arr[i-1]+arr[i]) 
+		max_v = max(arr[i], max_v) 
+	return max_v
+'''
+a = [2, -8, 3, -2, 4, -10]
+print(contiguous_sequence_dp_optimized(a))'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.18 Pattern Matching: You are given two strings, pattern and value. The pattern string consists of
+# just the letters a and b, describing a pattern within a string. For example, the string catcatgocatgo
+# matches the pattern aabab (where cat is a and go is b). It also matches patterns like a, ab, and b.
+# Write a method to determine if value matches pattern.
+
+# Time Complexity: O(N^2), Space Complexity: O(1)
+def pattern_matching(pattern, value):
+
+	def helper(pattern, value, a, b):
+		
+		if not pattern and not value : return True
+		if not pattern or not value: return False
+
+		for i in range(1,len(value)+1):
+			print(f"pattern: {pattern}, value: {value}, a:{a}, b:{b}, i:{i}")
+			v = value[0:i]
+			p = pattern[0]
+			check_1,check_2,check_3,check_4 = False, False, False, False
+			if p=="a" and not a: check_1 = helper(pattern[1:], value[i:], a+v, b)
+			if p=="a" and v==a: check_2 = helper(pattern[1:], value[i:], a, b)
+			if p=="b" and not b: check_3 = helper(pattern[1:], value[i:], a, b+v)
+			if p=="b" and v==b: check_4 = helper(pattern[1:], value[i:], a, b)
+			if check_1 or check_2 or check_3 or check_4: return True
+
+		return False
+
+
+	return helper(pattern, value, "", "")
+
+#print(pattern_matching("aabab", "catcatgocatgo"))
+#print(pattern_matching("ababbba", "abc"))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.19 Pond Sizes: You have an integer matrix representing a plot of land, where the value at that location
+# represents the height above sea level. A value of zero indicates water. A pond is a region of water
+# connected vertically, horizontally, or diagonally. The size of the pond is the total number of
+# connected water cells. Write a method to compute the sizes of all ponds in the matrix.
+# EXAMPLE
+# Input:
+# 0 2 1 0
+# 0 1 0 1
+# 1 1 0 1
+# 0 1 0 1
+# Output: 2, 4, 1 (in any order)
+
+# Time Complexity: O(M*N) -> O(N^2), Space Complexity: O(1)
+def pond_sizes(land):
+
+	for i in range(len(land)):
+		for j in range(len(land[0])):
+			if not land[i][j]:
+				land[i][j]-=1
+				if i-1>=0 and land[i-1][j]<0:
+					land[i][j] +=land[i-1][j]
+					land[i-1][j]=1
+				if j-1>=0 and land[i][j-1]<0:
+					land[i][j] += land[i][j-1]
+					land[i][j-1]=1
+				if i-1>=0 and j-1>0 and land[i-1][j-1]<0:
+					land[i][j] += land[i-1][j-1]
+					land[i-1][j-1]=1
+				if i-1>=0 and j+1<len(land[0]) and land[i-1][j+1]<0:
+					land[i][j] += land[i-1][j+1]
+					land[i-1][j+1]=1
+	
+	res = []
+	for i in range(len(land)):
+		for j in range(len(land[0])):
+			if land[i][j]<0: res.append(abs(land[i][j]))
+	return res
+'''
+a = [[0, 2, 1, 0],[0, 1, 0, 1],[1, 1, 0, 1],[0, 1, 0, 1]]
+print(pond_sizes(a))'''
+
+# Time Complexity: O(M*N) -> O(N^2), Space Complexity: O(1)
+def pond_sizes_alternate_method(land):
+
+	def checkSurrounding(row,col):
+		if row<0 or col<0 or row>len(land)-1 or col>len(land[0])-1 or land[row][col] !=0: return 0
+		land[row][col] = -1
+		pond_size = 1
+		for i in range(-1,2):
+			for j in range(-1,2): pond_size+= checkSurrounding(row+i,col+j)
+		return pond_size
+
+	ponds = []
+	for i in range(len(land)):
+		for j in range(len(land[0])):
+			if not land[i][j]: ponds.append(checkSurrounding(i,j))
+	return ponds
+
+a = [[0, 2, 1, 0],[0, 1, 0, 1],[1, 1, 0, 1],[0, 1, 0, 1]]
+print(pond_sizes_alternate_method(a))
+
+#---------------------------------------------------------------------------------------------------------
+# 16.20 T9: On old cell phones, users typed on a numeric keypad and the phone would provide a list of words
+# that matched these numbers. Each digit mapped to a set of O - 4 letters. Implement an algorithm
+# to return a list of matching words, given a sequence of digits. You are provided a list of valid words
+# (provided in whatever data structure you'd like). The mapping is shown in the diagram below:
+#
+#   1  |  2  |  3
+#      | abc | def         
+# -----------------
+#   4  |  5  |  6
+#  ghi | jkl | mno
+# -----------------
+#   7  |  8  |  9
+# pqrs | tuv | xyz
+# -----------------
+# EXAMPLE
+# Input: 8733
+# Output: tree, used
+
+def t9(input, dictionary):
+
+	if not input: return None
+	num_map = {1:'', 2:'abc', 3:'def', 4:'ghi', 5:'jkl', 6:'mno', 7:'pqrs', 8:'tuv', 9:'xyz'}
+
+	def helper(input, word):
+		if idx == len(input)-1:
+			if word in dictionary: res.append(word)
+			return
+		digit = input[idx]
+		for d in input
+		for c in input[idx]
+
+
+	res = []
+	helper(0, '')
+
+	
