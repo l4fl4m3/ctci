@@ -4927,8 +4927,9 @@ def pond_sizes_alternate_method(land):
 			if not land[i][j]: ponds.append(checkSurrounding(i,j))
 	return ponds
 
+'''
 a = [[0, 2, 1, 0],[0, 1, 0, 1],[1, 1, 0, 1],[0, 1, 0, 1]]
-print(pond_sizes_alternate_method(a))
+print(pond_sizes_alternate_method(a))'''
 
 #---------------------------------------------------------------------------------------------------------
 # 16.20 T9: On old cell phones, users typed on a numeric keypad and the phone would provide a list of words
@@ -4949,21 +4950,411 @@ print(pond_sizes_alternate_method(a))
 # Input: 8733
 # Output: tree, used
 
-def t9(input, dictionary):
+# Time Complexity: O(4^N) where N in number of digits in input, Space Complexity: O(D) where D is size of dictionary
+def t9_naive(input, dictionary):
 
 	if not input: return None
 	num_map = {1:'', 2:'abc', 3:'def', 4:'ghi', 5:'jkl', 6:'mno', 7:'pqrs', 8:'tuv', 9:'xyz'}
 
-	def helper(input, word):
-		if idx == len(input)-1:
+	def helper(idx, word):
+		if idx == len(input):
 			if word in dictionary: res.append(word)
 			return
-		digit = input[idx]
-		for d in input
-		for c in input[idx]
-
+		
+		for c in num_map[input[idx]]: helper(idx+1, word+c)
 
 	res = []
 	helper(0, '')
-
+	return res
+'''
+d = {'burt', 'tree', 'used'}
+inp = [8,7,3,3]
+print(t9_naive(inp,d))'''
 	
+# Better to use trie, for dictionary
+# Time Complexity: unsure O(4*N), Space Complexity: O(D) where where D is size of dictionary
+def t9(input, dictionary_trie):
+
+	if not input: return None
+	num_map = {1:'', 2:'abc', 3:'def', 4:'ghi', 5:'jkl', 6:'mno', 7:'pqrs', 8:'tuv', 9:'xyz'}
+
+	def helper(idx, dict_trie, word):
+		if idx == len(input):
+			if -1 in dict_trie: res.append(word)
+			return
+
+		for c in num_map[input[idx]]: 
+			if c in dict_trie: helper(idx+1, dict_trie[c], word+c)
+
+	res = []
+	helper(0, dictionary_trie, '')
+	return res
+'''
+d_trie = {'a':{-1:{}}, 'b':{-1:{}}, 't':{'r':{'e':{'e':{-1:{}}, 'f':{'g':{}}}}}, 'u':{'s':{'e':{'d':{-1:{}}}}}}
+inp = [8,7,3,3]
+print(t9(inp,d_trie))'''
+
+# Time Complexity: O(D), Space Complexity: O(D), Look portion (without transforming dictionary) is O(1)
+def t9_optimal(input, dictionary):
+
+	if not input: return None
+	num_map = {1:'', 2:'abc', 3:'def', 4:'ghi', 5:'jkl', 6:'mno', 7:'pqrs', 8:'tuv', 9:'xyz'}
+	flipped_map = {a:k for k,v in num_map.items() for a in v}
+	dict_to_t9 = {}
+	for word in dictionary:
+		t9_repr = 0
+		for c in word: t9_repr = t9_repr*10 + flipped_map[c]
+		if t9_repr not in dict_to_t9: dict_to_t9[t9_repr] = [word]
+		else: dict_to_t9[t9_repr].append(word)
+
+	return dict_to_t9[input]
+
+'''
+d = ['burt', 'tree', 'used']
+inp = 8733
+print(t9_optimal(inp, d))'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.21 Sum Swap: Given two arrays of integers, find a pair of values (one value from each array) that you
+# can swap to give the two arrays the same sum.
+# EXAMPLE
+# Input:{4, 1, 2, 1, 1, 2} and {3, 6, 3, 3}
+# Output: {1, 3}
+
+# Time Complexity: O(NlogN) where N = max_length(arr1, arr2) or O(AlogA + BlogB), Space ComplexityL O(1)
+def sum_swap(arr1, arr2):
+
+	arr1.sort()
+	arr2.sort()
+	sum_1 = sum(arr1)
+	sum_2 = sum(arr2)
+	diff = sum_1 - sum_2
+
+	i,j=0,0
+	while i < len(arr1) and j < len(arr2):
+		if 2*arr1[i] - 2*arr2[j] == diff: return (arr1[i],arr2[j]) # this is a measure of our new difference
+		if 2*arr1[i] - 2*arr2[j] < diff: j+=1 # want to converge to diff, increment j (making our new difference larger)
+		else: i+=1 # want to converge to diff, increment i (making our new difference smaller)
+
+	return None
+'''
+a = [4, 1, 2, 1, 1, 2] #11
+b = [2, 5, 3, 3] #13
+print(sum_swap(a,b))'''
+
+# Time Complexity: O(N) or O(A + B) where N = max(A , B) where A,B = length arr1 and arr2, respectively, Space Complexity: O(A)
+def sum_swap_optimal_time(arr1, arr2):
+
+	sum_1 = sum(arr1)
+	sum_2 = sum(arr2)
+	diff = sum_1 - sum_2
+	set_1 = set(arr1)
+	for num in arr2:
+		to_find = (diff + 2*num)/2
+		if to_find in set_1: return (int(to_find), num) # int wrapper only to prettify result
+	return None
+
+'''
+a = [4, 1, 2, 1, 1, 2] #11
+b = [2, 5, 3, 3] #13
+print(sum_swap_optimal_time(a,b))'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.22 Langton's Ant: An ant is sitting on an infinite grid of white and black squares. It initially faces right.
+# At each step, it does the following:
+# (1) At a white square, flip the color of the square, turn 90 degrees right (clockwise), and move forward
+# one unit.
+# (2) At a black square, flip the color of the square, turn 90 degrees left (counter-clockwise), and move
+# forward one unit.
+# Write a program to simulate the first K moves that the ant makes and print the final board as a grid.
+# Note that you are not provided with the data structure to represent the grid. This is something you
+# must design yourself. The only input to your method is K. You should print the final grid and return
+# nothing. The method signature might be something like void printKMoves ( int K).
+
+# B B B B B
+# B W B B B
+# B B W B B
+# B B B B W
+# B B B B B
+
+class Board:
+	def __init__(self, whites, ant_pos, top_left, bottom_right):
+		self.top_left= top_left
+		self.bottom_right = bottom_right
+		self.ant = (ant_pos[0],ant_pos[1],'r')
+		self.whites = set()
+		for w in whites: self.whites.add(w)
+		self.next_o_white= {'r':'d', 'd':'l', 'l':'u', 'u':'r'}
+		self.next_o_black= {'r':'u', 'u':'l', 'l':'d', 'd':'r'}
+
+	def sim_step(self):
+		ant_pos = (self.ant[0], self.ant[1])
+		if  ant_pos in self.whites:
+			self.whites.remove(ant_pos)
+			self.move_forward(ant_pos, self.next_o_white[self.ant[2]])
+		else:
+			self.whites.add(ant_pos)
+			self.move_forward(ant_pos, self.next_o_black[self.ant[2]])
+
+	def move_forward(self, start, direction):
+		row, col = start[0], start[1]
+		if direction=='r': col+=1
+		elif direction=='l': col-=1
+		elif direction=='d': row+=1
+		elif direction=='u': row-=1
+		row = min(row, self.bottom_right[0])
+		row = max(row, self.top_left[0])
+		col = min(col, self.bottom_right[1])
+		col = max(col, self.top_left[1])
+		self.ant = (row,col,direction)
+
+	# Our dict implementation makes growing the grid much simpler, than would an array
+	def grow_grid(self, new_whites, new_top_left, new_bottom_right):
+		''' Can implement this if needed. We just update our new limit positions, and add new whites to the white dict'''
+		for w in new_whites: self.whites.add(w)
+		self.top_left= new_top_left
+		self.bottom_right = new_bottom_right
+
+	def print_board(self):
+		for i in range(self.bottom_right[0]+1):
+			for j in range(self.bottom_right[1]+1):
+				if (i,j) in self.whites: print (f" W", end="")
+				else: print(f" B", end="")
+			print("")
+
+# Time Complexity: O(M*N), Space Complexity: O(M*N) --> only if entire board is white, usually much less
+def langtons_ant(k):
+
+	board = Board([(1,1), (2,2), (3,4)], (2,2), (0,0), (4,4))
+	print("BEFORE: ")
+	board.print_board()
+	for _ in range(k): board.sim_step()
+	print()
+	print("AFTER: ")
+	board.print_board()
+
+
+#langtons_ant(6)
+
+#---------------------------------------------------------------------------------------------------------
+# 16.23 Rand7 from Rand 5: Implement a method rand7() given rand5(). That is, given a method that
+# generates a random number between O and 4 (inclusive), write a method that generates a random
+# number between O and 6 (inclusive).
+
+# rand5 -> P = 1/5 , rand5 + rand5 -> P = 1/25 
+# a  b  r   a  b  r    p(0) = 1/25  p_mod7(0) = 3/25
+# 0  0  0   3  0  3    p(1) = 2/25  p_mod7(1) = 3/25
+# 0  1  1   3  1  4    p(2) = 3/25  p_mod7(2) = 3/25
+# 0  2  2   3  2  5    p(3) = 4/25  p_mod7(3) = 4/25
+# 0  3  3   3  3  6    p(4) = 5/25  p_mod7(4) = 5/25
+# 0  4  4   3  4  7    p(5) = 4/25  p_mod7(5) = 4/25
+# 1  0  1   4  0  4    p(6) = 3/25  p_mod7(6) = 3/25
+# 1  1  2   4  1  5    p(7) = 2/25
+# 1  2  3   4  2  6    p(8) = 1/25
+# 1  3  4   4  3  7
+# 1  4  5   4  4  8
+# 2  0  2
+# 2  1  3
+# 2  2  4
+# 2  3  5
+# 2  4  6
+
+# rand5 -> P = 1/5 , 5*rand5 + rand5 -> P = 1/25 (uniformly distributed), 4*rand5 + rand5 is not etc. etc.
+# a  b  r    a  b  r     p(0) = 1/25  p_mod7(0) = 4/25  p_mod7_<21(0) = 3/21 = 1/7
+# 0  0  0    3  0  15    p(1) = 1/25  p_mod7(1) = 4/25  p_mod7_<21(1) = 3/21 = 1/7
+# 0  1  1    3  1  16    p(2) = 1/25  p_mod7(2) = 4/25  p_mod7_<21(2) = 3/21 = 1/7
+# 0  2  2    3  2  17    p(3) = 1/25  p_mod7(3) = 4/25  p_mod7_<21(3) = 3/21 = 1/7
+# 0  3  3    3  3  18    p(4) = 1/25  p_mod7(4) = 3/25  p_mod7_<21(4) = 3/21 = 1/7
+# 0  4  4    3  4  19    p(5) = 1/25  p_mod7(5) = 3/25  p_mod7_<21(5) = 3/21 = 1/7
+# 1  0  5    4  0  20    p(6) = 1/25  p_mod7(6) = 3/25  p_mod7_<21(6) = 3/21 = 1/7
+# 1  1  6    4  1  21    p(7) = 1/25
+# 1  2  7    4  2  22    p(x) = 1/25
+# 1  3  8    4  3  23
+# 1  4  9    4  4  24
+# 2  0  10
+# 2  1  11
+# 2  2  12
+# 2  3  13
+# 2  4  14
+
+# Non-deterministic, Time Complexity: O(inf) (however tiny prob of happening), Space Complexity: O(1)
+def rand7():
+	while True:
+		rand_num = 5*rand5() + rand5() # 0 ... 24
+		if rand_num <21:
+			return rand_num % 7
+def rand5():
+	return random.randint(0,4)
+
+#print(rand7())
+
+#---------------------------------------------------------------------------------------------------------
+# 16.24 Pairs with Sum: Design an algorithm to find all pairs of integers within an array which sum to a
+# specified value.
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def pairs_with_sum(arr, sum_val):
+	
+	dict_1 = {}
+	for a in arr:
+		if a not in dict_1: dict_1[a] = 1
+		else: dict_1[a]+=1
+
+	pairs = []
+	for a in arr:
+		if sum_val - a in dict_1 and dict_1[sum_val - a] and dict_1[a]: 
+			pairs.append((a, sum_val-a))
+			dict_1[sum_val - a]-=1
+			dict_1[a]-=1
+
+	return pairs
+'''
+a = [2,1,9,3,4,5,2,8,19,0,5,5,4,0,1]
+print(pairs_with_sum_naive(a, 5))'''
+
+# Time Complexity: O(NlogN), Space Complexity: O(1)
+def pairs_with_sum_space_optimized(arr, sum_val):
+
+	arr.sort()
+
+	i,j=0,len(arr)-1
+	pairs=[]
+	while i<j:
+		if (arr[i] + arr[j]) == sum_val:
+			pairs.append((arr[i],arr[j]))
+			i+=1
+			j-=1
+		elif (arr[i] + arr[j]) > sum_val: j-=1
+		else: i+=1
+	return pairs
+'''
+a = [2,1,9,3,4,5,3,2,2,8,19,0,5,5,4,0,1]
+print(pairs_with_sum_space_optimized(a, 6))'''
+
+#---------------------------------------------------------------------------------------------------------
+# 16.25 LRU Cache: Design and build a "least recently used" cache, which evicts the least recently used item.
+# The cache should map from keys to values (allowing you to insert and retrieve a value associated
+# with a particular key) and be initialized with a max size. When it is full, it should evict the least
+# recently used item. You can assume the keys are integers and the values are strings.
+
+class LRUCacheNaive:
+	def __init__(self, size):
+		self.size = size
+		self.lru = {}
+		self.queue = []
+
+	def add(self, key, item):
+		if len(self.lru) != self.size:
+			self.queue.append(key)
+			self.lru[key] = item
+		else:
+			self.lru.pop(self.queue[0])
+			self.queue.pop(0)
+			self.queue.append(key)
+			self.lru[key] = item
+
+	def get(self, key):
+		if key not in self.lru: return None
+		self.queue.pop(key)
+		self.queue.append(key)
+		return self.lru[key]
+
+class ListNode:
+	def __init__(self, key, val):
+		self.key = key
+		self.val = val
+		self.next = None
+		self.prev = None
+
+# Time Complexity: O(1) all ops, Space Complexity: O(N)
+class LRUCache:
+	def __init__(self, size):
+		self.size = size
+		self.lru = {}
+		self.head = None
+		self.tail = None
+
+	# Time Complexity: O(1)
+	def addToBegList(self, node):
+		if not self.head: self.head = self.tail = node
+		else:
+			self.head.prev = node
+			node.next = self.head
+			self.head = node
+	
+	# Time Complexity: O(1)
+	def removeFromEndList(self):
+		tail = self.tail
+		if self.tail == self.head:
+			self.tail = self.head = None
+			return tail
+
+		self.tail = self.tail.prev
+		self.tail.next = None
+		tail.prev = None
+
+		return tail
+	
+	# Time Complexity: O(1)
+	def add(self, key, item):
+		new_node = ListNode(key,item)
+		if len(self.lru) != self.size:
+			self.addToBegList(new_node)
+			self.lru[key] = new_node
+		else:
+			least = self.removeFromEndList()
+			self.addToBegList(new_node)
+			self.lru.pop(least.key)
+			self.lru[key] = new_node
+		self.size+=1
+	
+	# Time Complexity: O(1)
+	def get(self, key):
+		if key not in self.lru: return None
+		if self.head.key == key: return self.lru[key].val
+		node = self.lru[key]
+		prev = node.prev
+		next = node.next
+		prev.next = next
+		if next: next.prev = prev
+		node.prev = None
+		node.next = None
+		self.addToBegList(node)
+
+		return self.lru[key].val
+
+#---------------------------------------------------------------------------------------------------------
+# 16.26 Calculator: Given an arithmetic equation consisting of positive integers,+,-,* and/ (no parentheses),
+# compute t he result.
+# EXAMPLE
+# Input: 2*3+5/6*3+15
+# Output: 23.5
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def calculator(input):
+	
+	def helper(idx):
+		if not input: return None
+		to_do, num = [],0
+		while idx<len(input) and (input[idx].isdigit() or input[idx] in {"*", "/"}): 
+			if input[idx].isdigit() : num = num*10 + int(input[idx])
+			else: 
+				to_do.append(num)
+				to_do.append(input[idx])
+				num = 0
+			idx+=1
+		if num: to_do.append(num)
+		print(f"todo: {to_do}")
+		res = to_do[0]
+		for i in range(1,len(to_do)-1,2):
+			if to_do[i]=="*": res = res * to_do[i+1]
+			if to_do[i]=="/": res = res / to_do[i+1]
+		num = res
+		if idx<len(input) and input[idx]== "+": return num + helper(idx+1)
+		if idx<len(input) and input[idx]== "-": return num - helper(idx+1)
+		return num
+	
+	return helper(0)
+
+a = "2*3+5/6*3+15"
+print(calculator(a))
