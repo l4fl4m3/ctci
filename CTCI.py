@@ -5376,7 +5376,7 @@ def calculator_cleaner(input):
 	total, curr = 0,cleaned_input[0]
 	nextOp = None
 	idx = 1
-	while idx<len(cleaned_input):
+	while idx<len(cleaned_input)-1:
 		
 		if idx+2 < len(cleaned_input): nextOp = cleaned_input[idx+2]
 		
@@ -5390,11 +5390,12 @@ def calculator_cleaner(input):
 			curr = 0
 			nextOp= None
 		idx += 2
-		
+
 	total += curr
 
 	return total
 
+
 a = "2*3+5/6*3+15"
 b = "2-6-7*8/2+5"
-print(calculator_cleaner(b))
+print(calculator_cleaner(a))
