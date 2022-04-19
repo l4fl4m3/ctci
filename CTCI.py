@@ -5325,14 +5325,14 @@ class LRUCache:
 
 #---------------------------------------------------------------------------------------------------------
 # 16.26 Calculator: Given an arithmetic equation consisting of positive integers,+,-,* and/ (no parentheses),
-# compute t he result.
+# compute the result.
 # EXAMPLE
 # Input: 2*3+5/6*3+15
 # Output: 23.5
 
 # Time Complexity: O(N), Space Complexity: O(N)
 def calculator(input):
-	
+	'''METHOD IS WRONG, NEED TO TWEAK, SEE BELOW VERSION WHICH IS CORRECT'''
 	def helper(idx):
 		if not input: return None
 		to_do, num = [],0
@@ -5355,6 +5355,46 @@ def calculator(input):
 		return num
 	
 	return helper(0)
+'''
+a = "2*3+5/6*3+15"
+print(calculator(a))'''
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def calculator_cleaner(input):
+	if not input or len(input)<3: return input
+
+	cleaned_input = []
+	num = 0
+	for i in range(len(input)):
+		if input[i].isdigit(): num = num*10 + int(input[i])
+		else: 
+			cleaned_input.append(num)
+			cleaned_input.append(input[i])
+			num = 0
+	cleaned_input.append(num)
+
+	total, curr = 0,cleaned_input[0]
+	nextOp = None
+	idx = 1
+	while idx<len(cleaned_input):
+		
+		if idx+2 < len(cleaned_input): nextOp = cleaned_input[idx+2]
+		
+		if cleaned_input[idx] == "*": curr = curr * cleaned_input[idx+1]
+		elif cleaned_input[idx] == "/": curr = curr / cleaned_input[idx+1]
+		elif cleaned_input[idx]=="+": curr = curr + cleaned_input[idx+1]
+		elif cleaned_input[idx]=="-": curr = curr - cleaned_input[idx+1]
+		
+		if nextOp and nextOp in {"+","-"}: 
+			total += curr
+			curr = 0
+			nextOp= None
+		idx += 2
+		
+	total += curr
+
+	return total
 
 a = "2*3+5/6*3+15"
-print(calculator(a))
+b = "2-6-7*8/2+5"
+print(calculator_cleaner(b))
