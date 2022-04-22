@@ -451,6 +451,41 @@ def majority_element(arr):
 
     if count>= length//2 + 1: return max_consecutive_val
     return -1
+'''
+a = [1, 2, 5, 9, 5, 9, 5, 5, 5]
+print(majority_element(a))'''
 
-a = [1,2,9, 5, 9, 5, 5, 5]
-print(majority_element(a))
+# Time Complexity: O(N), Space Complexity: O(1)
+def majority_element_clean(arr):
+    ''' This works since like above, we are looking for a consecutive element (the longest continuous one). This will ALWAYS 
+    be 1 if there is a majority element, the final max_count will be equal to 1, and would not have reset to a random
+    index, but rather and index of the majority element. It can be 1 on other occasions aswell, so we check the count of our
+    proposed major element in the second for loop. Since majority element count is n//2 + 1, while all others are
+    n//2 - 1, so if majority element, max_count will have incremented and decremented but at the end would be at least 1.'''
+
+    max_count, max_consecutive_idx = 1,0
+    for i in range(len(arr)):
+        if arr[i] == arr[max_consecutive_idx]: max_count+=1
+        else: max_count-=1
+
+        if not max_count:
+            max_count = 1
+            max_consecutive_idx=i
+
+    count = 0
+    for i in range(len(arr)):
+        if arr[i] == arr[max_consecutive_idx]: count+=1
+
+    return arr[max_consecutive_idx] if count>len(arr)//2 else -1
+
+'''
+a = [5,3,5,3,5,3,5]
+print(majority_element_clean(a))'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.11 Word Distance: You have a large text file containing words. Given any two words, find the shortest
+# distance (in terms of number of words) between them in the file. If the operation will be repeated
+# many times for the same file (but different pairs of words), can you optimize your solution?
+
+def word_distance():
+    
