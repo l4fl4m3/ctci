@@ -217,21 +217,240 @@ a = [1,'a',5,7,9,'b',4,'f']
 print(letters_and_numbers_naive(a))'''
 
 # [1,'a',5,7,9,'b',4,'f']
-#
+#     
 # dp = [1,1,2,3,4,4,5,5]
 #      [0,1,1,1,1,2,2,3]
-def letters_and_numbers_dp(arr):
+#diff:0 1 0 1 2 3 2 3 2
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def letters_and_numbers(arr):
     if not arr or len(arr) <2: return None
 
     count_n = [0 for i in range(len(arr))]
     count_l = [0 for i in range(len(arr))]
+    diffs = [0 for i in range(len(arr)+1)]
+    first_occurence = {0:0}
+    cur_max = 0
+    max_idxs = (0,0)
+
     for i in range(len(arr)):
         count_n[i] = count_n[i-1]
         count_l[i] = count_l[i-1]
         if type(arr[i]) == int: count_n[i]+=1
         else: count_l[i]+=1
-    print(count_n)
-    print(count_l)
+        diffs[i+1] = count_n[i] - count_l[i]
+        if diffs[i+1] not in first_occurence: first_occurence[diffs[i+1]] = i
+        else: 
+            if (i - first_occurence[diffs[i+1]]) > cur_max:
+                cur_max = i - first_occurence[diffs[i+1]]
+                max_idxs = (first_occurence[diffs[i+1]]+1,i)
+    
+    return arr[max_idxs[0]:max_idxs[1]+1]
+
+#print(letters_and_numbers([1,'a',5,7,9,'b',4,'f','g',5]))
+
+#---------------------------------------------------------------------------------------------------------
+# 17.6 Count of 2s: Write a method to count the number of 2s between O and n.
+
+# 0-15 -> [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15] -> 2 (0010), 12 (1100) -> 2 
+# 0-20 -> [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20] -> 2 (00010), 12 (01100), 20 (10100) -> 3
+# 0-22 -> [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22] -> 2 (00010), 12 (01100), 20 (10100), 21 (10101), 22 (10110) -> 6
+# 22 %10 = 2, 22 - 22%10 = 20 
+
+# 61523
+# 0 digit: 30//10, 1 digit:  , 2 digit: 2000//10, 3 digit: 60000//10, 4 digit: 100000/10
+
+# Time Complexity: O(logN), Space Complexity: O(1)
+def count_of_2s(n):
+
+    def twos_at_digit(num, digit):
+
+        digit_val = (num // (10**(digit))) % 10
+        next_digit_val = (num // (10**(digit+1))) % 10
+        rounded_up = (next_digit_val+1)*(10**(digit+1))
+        rounded_down = (next_digit_val)*(10**(digit+1))
+        count_right = num % (10**digit)
+        if digit_val<2: return rounded_down//10
+        if digit_val>2: return rounded_up//10
+        else: return rounded_down//10 + count_right +1
+
+    count = 0
+    num_digits = int(math.log10(n))+1
+    for i in range(num_digits): count+=twos_at_digit(n, i)
+    return count
+
+#print(count_of_2s(29))
+
+#---------------------------------------------------------------------------------------------------------
+# 17.7 Baby Names: Each year, the government releases a list of the 10,000 most common baby names
+# and their frequencies (the number of babies with that name). The only problem with this is that
+# some names have multiple spellings. For example, "John" and "Jon" are essentially the same name
+# but would be listed separately in the list. Given two lists, one of names/frequencies and the other
+# of pairs of equivalent names, write an algorithm to print a new list of the true frequency of each
+# name. Note that if John and Jon are synonyms, and Jon and Johnny are synonyms, then John and
+# Johnny are synonyms. (It is both transitive and symmetric.) In the final list, any name can be used
+# as the "real" name.
+# EXAMPLE
+# Input:
+# Names: John (15), Jon (12), Chris (13), Kris (4), Christopher (19)
+# Synonyms: (Jon, John), (John, Johnny), (Chris, Kris), (Chris, Christopher)
+# Output: John (27), Kris (36)
+
+# Time Complexity: O(N+S), Space Complexity: O(N) , where N=# baby names, S= pair of synonyms
+def baby_names(names, equivalents):
+
+    names_map = {k:v for k,v in names}
+    def make_graph():
+        adj_list = {}
+        for eqv in equivalents:
+            if eqv[0] in adj_list: adj_list[eqv[0]].append(eqv[1]) 
+            else: adj_list[eqv[0]] = [eqv[1]]
+
+            if eqv[1] in adj_list: adj_list[eqv[1]].append(eqv[0]) 
+            else: adj_list[eqv[1]] = [eqv[0]] 
+        # add any remaining names, as solo nodes 
+        for name in names: 
+            if name[0] not in adj_list: adj_list[name[0]] = [name[0]] 
+
+        return adj_list
+    
+    def dfs_helper(vertex):
+        if vertex in visited: return 0
+        visited.add(vertex)
+        c = names_map[vertex] if vertex in names_map else 0
+        for adj in graph[vertex]: c+= dfs_helper(adj)
+        return c
+
+    def dfs():
+        for v in graph:
+            if v not in visited:
+                count = dfs_helper(v)
+                res.append((v,count))
+
+    graph = make_graph()
+    visited = set()
+    res = []
+    dfs()
+    print(res)
+    return res
+
+'''
+n = [('John', 15), ('Jon',12), ('Chris',13), ('Kris',4), ('Christopher',19), ('Chrissy',3)]
+e = [('Jon', 'John'), ('John', 'Johnny'), ('Chris', 'Kris'), ('Chris', 'Christopher')]
+
+baby_names(n,e)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.8 Circus Tower: A circus is designing a tower routine consisting of people standing atop one another's
+# shoulders. For practical and aesthetic reasons, each person must be both shorter and lighter than
+# the person below him or her. Given the heights and weights of each person in the circus, write a
+# method to compute the largest possible number of people in such a tower.
+
+# Time Complexity: O(N^2), Space Complexity: O(N), N=# of people in circus
+# Used a variation of box stacking problem, basically sort, then LIS
+def circus_tower_dp(people):
+
+    people.sort(key=lambda x: x[0], reverse=True)
+    print(people)
+    dp = [people[i][0] for i in range(len(people))]
+    for i in range(1,len(people)):
+        for j in range(i):
+            if people[i][1]< people[j][1] and people[i][0]<people[j][0]: dp[i] = max(dp[i], dp[j]+people[i][0])
+
+    print(dp)
+    print(max(dp))
+    return max(dp)
 
 
-letters_and_numbers_dp([1,'a',5,7,9,'b',4,'f'])
+'''
+p = [(6,100),(2,110),(5,95),(3,90),(4,100),(6,110),(6,95),(6,85), (5,115), (2,80)]
+circus_tower_dp(p)'''
+# version to show actual list of people
+def circus_tower_dp_2(people):
+
+    people.sort(key=lambda x: x[0], reverse=True)
+    print(people)
+    dp = [[people[i][0],[i]] for i in range(len(people))]
+    for i in range(1,len(people)):
+        for j in range(i):
+            if people[i][1]< people[j][1] and people[i][0]<people[j][0]:
+                if dp[j][0]+people[i][0]> dp[i][0]:
+                    dp[i][0] = dp[j][0]+people[i][0]
+                    dp[i][1] = dp[j][1] + [i]
+
+
+    print(dp)
+    print(max(dp))
+    return max(dp)
+
+'''
+p = [(6,100),(2,110),(5,95),(3,90),(4,100),(6,110),(6,95),(6,85), (5,115), (2,80)]
+circus_tower_dp_2(p)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.9 Kth Multiple: Design an algorithm to find the kth number such that the only prime factors are 3, 5,
+# and 7. Note that 3, 5, and 7 do not have to be factors, but it should not have any other prime factors.
+# For example, the first several multiples would be (in order) 1, 3, 5, 7, 9, 15, 21.
+
+# kth multiple = (3^a) * (3^b) * (3^c), some combination of a b and c
+# 1,   3, 5, 7,   9, 15, 21,   25, 27, 35   45, 49, 63
+ 
+from collections import deque 
+# Time Complexity: O(k), Space Complexity: O(k)
+def kth_multiple(k):
+    threes, fives, sevens = deque(),deque(),deque() # could make our own queue class as well, this was just easier to implement
+    x = 1
+    for i in range(1,k):
+        threes.append(x*3)
+        fives.append(x*5)
+        sevens.append(x*7)
+        x = min(threes[0], fives[0], sevens[0])
+        if x == threes[0]: 
+            x = threes.popleft()
+        if x == fives[0]:
+            x = fives.popleft()
+        if x == sevens[0]: 
+            x = sevens.popleft()
+
+    print(x)
+    return x
+
+#kth_multiple(40)
+
+#---------------------------------------------------------------------------------------------------------
+# 17.10 Majority Element: A majority element is an element that makes up more than half of the items in
+# an array. Given a positive integers array, find the majority element. If there is no majority element,
+# return -1. Do this in O(N) time and 0(1) space.
+# Input: 1 2 5 9 5 9 5 5 5
+# Output: 5
+
+# Time Complexity: O(N), Space Complexity: O(1)
+def majority_element(arr):
+    
+    length = len(arr)
+    max_consecutive = 0
+    max_consecutive_val = 0
+    curr_consecutive = 1
+    for i in range(1,len(arr)):
+        if arr[i-1] == arr[i]: 
+            curr_consecutive+=1
+            if curr_consecutive>max_consecutive: 
+                max_consecutive = curr_consecutive
+                max_consecutive_val = arr[i]
+        else: curr_consecutive = 1
+
+    if length%2==1:
+        if arr[-1] == arr[0]:
+            curr_consecutive+=1
+            if curr_consecutive>max_consecutive: 
+                max_consecutive = curr_consecutive
+                max_consecutive_val = arr[-1]
+    count=0
+    for i in range(len(arr)):
+        if arr[i] == max_consecutive_val: count+=1
+
+    if count>= length//2 + 1: return max_consecutive_val
+    return -1
+
+a = [1,2,9, 5, 9, 5, 5, 5]
+print(majority_element(a))

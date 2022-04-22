@@ -3421,13 +3421,14 @@ def stack_of_boxes_optimized(boxes):
 
 	for i in range(1,len(boxes)):
 		for j in range(i):
-			if boxes[j][0]>boxes[i][0] and boxes[j][2]>boxes[i][2]: 
+			if boxes[j][0]>boxes[i][0] and boxes[j][2]>boxes[i][2] and boxes[j][1]>boxes[i][1]: 
 				dp[i] = max(dp[i], dp[j]+boxes[i][1])
 	return max(dp)
 
 
-a = [(1,4,6),(4,8,2),(4,5,8),(3,2,4),(6,6,4), (2,1,3), (2,3,3), (5,1,3), (4,5,7)]
-#print(stack_of_boxes_optimized(a))
+#a = [(1,4,6),(4,8,2),(4,5,8),(3,2,4),(6,6,4), (2,1,3), (2,3,3), (5,1,3), (4,5,7)]
+#b = [(1,4,6),(0,4,5),(4,5,8)]
+#print(stack_of_boxes_optimized(b))
 
 
 #---------------------------------------------------------------------------------------------------------
