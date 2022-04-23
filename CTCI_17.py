@@ -47,6 +47,7 @@ def add_without_plus(a,b):
 # Time Complexity: O(N^2) where N = number of cards in deck, Space Complexity: O(N)
 from itertools import count
 import random
+import re
 def shuffle_naive():
 	deck = []
 	avail = [i for i in range(52)]
@@ -487,5 +488,175 @@ print(majority_element_clean(a))'''
 # distance (in terms of number of words) between them in the file. If the operation will be repeated
 # many times for the same file (but different pairs of words), can you optimize your solution?
 
-def word_distance():
+# Time Complexity: O(N) per word pair search, Space Complexity: O(1)
+def word_distance_simple(words, word_pairs):
+
+    def helper(word1, word2):
+        
+        pos_1,pos_2 = -1,-1
+        f_word, s_word = word1, word2
+        dist = float('inf')
+        for i in range(len(words)):
+            if words[i] == word1: pos_1 = i
+            if words[i] == word2: pos_2 = i
+            if pos_1>=0 and pos_2>=0: dist = min(dist, abs(pos_1-pos_2))
+
+        return dist-1
     
+    # using this to repeat operation
+    for pair in word_pairs:
+        r = helper(pair[0], pair[1])
+        print(r)
+'''
+a = ['this', 'is', 'a', 'test', 'paragraph', 'that', 'I', 'will', 'be', 'using', 'The', 'paragraph', 'will', 'contain', 'words']
+word_pairs = [('this', 'test'), ('using', 'paragraph'), ('will', 'paragraph')]
+
+word_distance_simple(a, word_pairs)'''
+
+# Time Complexity: O(N) for first search O(A+B) for all subsequent where A=#occurences word1, B=#occurences word2, Space Complexity: O(N)
+def word_distance(words, word_pairs):
+
+    # O(N)
+    def build_location_dict():
+        for i in range(len(words)):
+            if words[i] not in locations: locations[words[i]] = [i]
+            else: locations[words[i]].append(i)
+    
+    # O(A+B)
+    def helper(word1, word2):
+        i,j = 0,0
+        min_distance = float('inf')
+        while i<len(locations[word1]) and j<len(locations[word2]):
+            min_distance = min(min_distance, abs(locations[word1][i] - locations[word2][j]))
+            if locations[word1][i]<= locations[word2][j]: i+=1
+            else: j+=1
+        
+        return min_distance-1
+        
+    locations = {}
+    build_location_dict()
+
+    # using this to repeat operation
+    for pair in word_pairs:
+        r = helper(pair[0], pair[1])
+        print(r)
+
+'''
+a = ['this', 'is', 'a', 'test', 'paragraph', 'that', 'I', 'will', 'be', 'using', 'The', 'paragraph', \
+     'will', 'contain', 'words', 'it', 'will', 'have', 'a', 'paragraph']
+word_distance(a, [('this', 'test'), ('using', 'paragraph'), ('will', 'paragraph')])'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.12 BiNode: Consider a simple data structure called BiNode, which has pointers to two other nodes. The
+# data structure BiNode could be used to represent both a binary tree (where node1 is the left node
+# and node2 is the right node) or a doubly linked list (where node1 is the previous node and node2
+# is the next node). Implement a method to convert a binary search tree (implemented with BiNode)
+# into a doubly linked list. The values should be kept in order and the operation should be performed
+# in place (that is, on the original data structure).
+
+# Tough question, need to think hard as a MF
+class BiNode:
+    def __init__(self, val):
+        self.val = val
+        self.pointer1 = None
+        self.pointer2 = None
+
+# Time Complexity: O(N), Space Complexity: O(1)
+def convert_bst_to_dll(root):
+
+    def traverse(root, parent):
+        if not root: return None
+
+        if not root.pointer2 and parent:
+            root.pointer2 = parent 
+            parent.pointer1 = root
+        right= traverse(root.pointer2, parent)
+        left = traverse(root.pointer1, root)
+        
+        if right:
+            root.pointer2 = right
+            right.pointer1 = root 
+            if parent: 
+                right.pointer2 = parent
+                parent.pointer1 = right
+
+        return left if left else root
+
+    return traverse(root, None)
+'''
+n1 = BiNode(5)
+n2 = BiNode(4)
+n3 = BiNode(3)
+n4 = BiNode(2)
+n5 = BiNode(7)
+n6 = BiNode(8)
+n7 = BiNode(9)
+n1.pointer1 = n2
+n1.pointer2 = n7
+n2.pointer1 = n4
+n4.pointer2 = n3
+n7.pointer1 = n5
+n5.pointer2 = n6
+
+def inorder(root):
+    if not root: return None
+    inorder(root.pointer1)
+    print(root.val, end=" ")
+    inorder(root.pointer2)
+
+inorder(n1)
+print()
+
+dll = convert_bst_to_dll(n1)
+while dll:
+    prev = dll.pointer1.val if dll.pointer1 else "NONE"
+    next = dll.pointer2.val if dll.pointer2 else "NONE"
+    curr = dll.val if dll else "NONE"
+    print(f"Prev: {prev}, Current:{curr}, Next: {next}")
+
+    dll=dll.pointer2
+'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.13 Re-Space: Oh, no! You have accidentally removed all spaces, punctuation, and capitalization in a
+# lengthy document. A sentence like "I reset the computer. It still didn't boot!"
+# became "iresetthecomputeritstilldidntboot''. You'll deal with the punctuation and capitalization
+# later; right now you need to re-insert the spaces. Most of the words are in a dictionary but
+# a few are not. Given a dictionary (a list of strings) and the document (a string), design an algorithm
+# to unconcatenate the document in a way that minimizes the number of unrecognized characters.
+# EXAMPLE
+# Input jesslookedjustliketimherbrother
+# Output: 'jess' looked just like 'tim' her brother (7 unrecognized characters)
+
+# in the above example jess + tim == 7 chars, since they are names, presumably they are not a part of the dictionary
+
+def re_space(document, dictionary):
+
+    def helper(document, count, us_list):
+        global res
+        if count in cache:
+            if count<res[0]: res = (count, cache[count])
+            return
+        if not document:
+            if us_list and count<res[0]: res = (count, us_list)
+            cache[count] = us_list
+            return
+
+        for i in range(1,len(document)+1): 
+            if document[:i] in dictionary:
+                helper(document[i:],count,us_list+[document[:i]])
+                
+        helper(document[1:],count+1,us_list)
+        
+
+    global res
+    res = (float('inf'), None)
+    cache={}
+    helper(document,0,[])
+    print(res)
+    
+doc = "jesslookedjustliketimherbrother"
+dic = {'looked', 'like', 'just', 'her', 'brother', 'look', 'other', 'bro'}
+
+re_space(doc,dic)
+
