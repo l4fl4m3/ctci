@@ -630,6 +630,7 @@ while dll:
 
 # in the above example jess + tim == 7 chars, since they are names, presumably they are not a part of the dictionary
 
+# Time Complexity: O(N^2), Space Complexity: O(N)
 def re_space(document, dictionary):
 
     def helper(document, count, us_list):
@@ -638,10 +639,10 @@ def re_space(document, dictionary):
             if count<res[0]: res = (count, cache[count])
             return
         if not document:
-            if us_list and count<res[0]: res = (count, us_list)
+            if count<res[0]: res = (count, us_list)
             cache[count] = us_list
             return
-
+            
         for i in range(1,len(document)+1): 
             if document[:i] in dictionary:
                 helper(document[i:],count,us_list+[document[:i]])
@@ -654,9 +655,164 @@ def re_space(document, dictionary):
     cache={}
     helper(document,0,[])
     print(res)
-    
+
+'''   
 doc = "jesslookedjustliketimherbrother"
 dic = {'looked', 'like', 'just', 'her', 'brother', 'look', 'other', 'bro'}
 
-re_space(doc,dic)
+re_space(doc,dic)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.14 Smallest K: Design an algorithm to find the smallest K numbers in an array.
+
+# Time Complexity: O(NlogN), Space Complexity: O(k), or O(1) if we just return indexes (ie, 0,k) since sorted array
+def smallest_k_naive(arr, k):
+
+    arr.sort()
+    return arr[0:k]
+
+'''
+a = [5, 9, -44, 16, 3, -4, 76, 66, -8, 240, 44, 37, -8, 9, 5]
+print(smallest_k_naive(a,5))'''
+
+# Time Complexity: O(N*logk), Space Complexity: O(k)
+def smallest_k(arr, k):
+
+    # O(logk)
+    def maxHeapify(heap, idx):
+
+        left_child = idx*2 +1
+        right_child = idx*2 +2
+
+        largest = idx
+        if left_child<len(heap) and heap[left_child]>heap[largest]: largest = left_child
+        if right_child<len(heap) and heap[right_child]>heap[largest]: largest = right_child
+        if largest !=idx: 
+            heap[idx], heap[largest] = heap[largest], heap[idx]
+            maxHeapify(heap, largest)
+
+    def insertHelper(heap, idx):
+        parent = (idx-1)//2
+        if parent>=0:
+            if heap[parent]<heap[idx]:
+                heap[parent], heap[idx] = heap[idx], heap[parent]
+                insertHelper(heap, parent)
+
+    def insert(heap,val):
+        heap.append(val)
+        insertHelper(heap,len(heap)-1)
+
+    def deleteMax(heap):
+        heap[0] = heap.pop()
+        maxHeapify(heap,0)
+
+    # O(k) (looks like it should be klogk, but is actually k)
+    def buildMaxHeap(heap):
+        for i in range((len(heap)//2)-1,-1,-1):
+            maxHeapify(heap,i)
+ 
+    heap = [arr[i] for i in range(k)]
+    buildMaxHeap(heap)
+    for i in range(k,len(arr)):
+        if arr[i]<heap[0]:
+            deleteMax(heap)
+            insert(heap, arr[i])
+
+    print(heap)
+    return heap
+
+'''
+a = [5, 16, -44, 9, 3, -4, 76, 66, -8, 240, 44, 37, -8, 9, 5]
+smallest_k(a,5)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.15 Longest Word: Given a list of words, write a program to find the longest word made of other words
+# in the list.
+
+# Time Complexity: O(N*L), Space Complexity: O(N), where L is the length of longest word
+def longest_word(words):
+    
+    def helper(word, pre, count):
+        global longest
+        if not word:
+            if not longest or len(pre) > len(longest) and count>1: longest = pre
+            return
+        for i in range(1,len(word)+1):
+            if word[:i] in word_dic: helper(word[i:], pre+word[:i], count+1)
+    
+    global longest
+    longest = None
+    word_dic = {w:[] for w in words}
+    words.sort(key=lambda x: len(x), reverse=True)
+    print(words)
+    for w in words:
+        helper(w,'',0)
+    print(longest)
+    return longest
+
+'''
+w = ['long', 'longer', 'toothpick', 'abrarearrangingtoothpickrearrearranging', 'rearranging', 'tooth', 'pick', 'rear', 'ranging', 'abra','cada','bra','shoot', 'abracadabrashoot']
+longest_word(w)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.16 The Masseuse: A popular masseuse receives a sequence of back-to-back appointment requests
+# and is debating which ones to accept. She needs a 15-minute break between appointments and
+# therefore she cannot accept any adjacent requests. Given a sequence of back-to-back appointment
+# requests (all multiples of 15 minutes, none overlap, and none can be moved), find the optimal
+# (highest total booked minutes) set the masseuse can honor. Return the number of minutes.
+# EXAMPLE
+# Input: {30, 15, 60, 75, 45, 15, 15, 45}
+# Output: 180 minutes ({30, 60, 45, 45}).
+
+# Time Complexity: O(2^N), Space Complexity: O(N)
+def masseuse_naive(requests):
+
+    def helper(requests,mins, appts):
+        global optimal
+        if not requests:
+            if not optimal[0] or optimal[0]<mins: optimal = (mins, appts)
+            return
+
+        helper(requests[2:],mins+requests[0],appts+[requests[0]])
+        helper(requests[1:],mins,appts)
+
+    global optimal
+    optimal = (None,None)
+    helper(requests,0,[])
+    print(optimal)
+    return optimal
+'''
+#a=[30, 15, 60, 75, 45, 15, 15, 45]
+b = [15,15,15,75,15]
+masseuse_naive(b)'''
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def masseuse_memo(requests):
+
+    def helper(idx):
+        
+        if idx >= len(requests): return 0
+        if idx in memo: return memo[idx]
+        choose = requests[idx]+helper(idx+2)
+        dont_choose = helper(idx+1)
+        memo[idx] = max(choose,dont_choose)
+
+        return memo[idx]
+
+    memo = {}
+    optimal = helper(0)
+    print(optimal)
+    return optimal
+
+a=[30, 15, 60, 75, 45, 15, 15, 45]
+b = [75,105,120,75,90,135]
+masseuse_memo(a)
+
+#---------------------------------------------------------------------------------------------------------
+# 17.17 Multi Search: Given a string b and an array of smaller strings T, design a method to search b for
+# each small string in T.
+
+def multi_search():
+    pass
+
 
