@@ -786,7 +786,7 @@ def masseuse_naive(requests):
 b = [15,15,15,75,15]
 masseuse_naive(b)'''
 
-# Time Complexity: O(N), Space Complexity: O(N)
+# Time Complexity: O(N), Space Complexity: O(N) 
 def masseuse_memo(requests):
 
     def helper(idx):
@@ -804,15 +804,56 @@ def masseuse_memo(requests):
     print(optimal)
     return optimal
 
-a=[30, 15, 60, 75, 45, 15, 15, 45]
+'''
+a = [30, 15, 60, 75, 45, 15, 15, 45]
 b = [75,105,120,75,90,135]
-masseuse_memo(a)
+masseuse_memo(a)'''
 
+def masseuse_optimized(requests):
+    '''TODO'''
+    pass
 #---------------------------------------------------------------------------------------------------------
 # 17.17 Multi Search: Given a string b and an array of smaller strings T, design a method to search b for
 # each small string in T.
 
-def multi_search():
-    pass
+# use trie
+# Time Complexity: O(b*k + t*k), Space Complexity: O(b) ?, where b=length of string b, t=# of strings in T, k=length of longest t
 
+def multi_search(b, T):
+    
+    # O(tk)
+    def makeTrie():
+        tr = {}
+        for word in T:
+            t = tr
+            for c in word:
+                if c not in t:
+                    t[c] ={}
+                    t=t[c]
+                else: t = t[c]
+            t[0] = -1
+        return tr
 
+    trie = trie_c = makeTrie()
+    results = []
+    word = ''
+
+    # O(bk)
+    for i in range(len(b)):
+        if b[i] in trie:
+            j = i
+            while j<len(b) and b[j] in trie:
+                word+=b[j]
+                trie = trie[b[j]]
+                if 0 in trie: results.append((word, (i,j)))
+                j+=1
+        
+            trie = trie_c
+            word=''
+    
+    print(results)
+    return results
+
+b = "This is a regular string to be searched"
+t = ['This', 'is', 'searched', 'search', 'string']
+multi_search(b,t)
