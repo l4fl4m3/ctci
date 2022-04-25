@@ -817,7 +817,8 @@ def masseuse_optimized(requests):
 # each small string in T.
 
 # use trie
-# Time Complexity: O(b*k + t*k), Space Complexity: O(b) ?, where b=length of string b, t=# of strings in T, k=length of longest t
+# Time Complexity: O(b*k + t*k), Space Complexity: O(bt) ? (to store all occurences)
+# where b=length of string b, t=# of strings in T, k=length of longest t
 
 def multi_search(b, T):
     
@@ -854,6 +855,120 @@ def multi_search(b, T):
     print(results)
     return results
 
+'''
 b = "This is a regular string to be searched"
 t = ['This', 'is', 'searched', 'search', 'string']
-multi_search(b,t)
+multi_search(b,t)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.18 Shortest Supersequence: You are given two arrays, one shorter (with all distinct elements) and one
+# longer. Find the shortest subarray in the longer array that contains all the elements in the shorter
+# array. The items can appear in any order.
+# EXAMPLE
+# Input:
+# {1, 5, 9}
+# {7, 5, 9, 0, 2, 1, 3, 5, 7, 9, 1, 1, 5, 8, 8, 9, 7}
+# Output:[7, 10] (the underlined portion above)
+
+# Time Complexity: O(s*l^2), Space Complexity: O(N) where l = length of longer array, and s = length of shorter array
+def shortest_supersequence_naive(shorter, longer):
+    
+    def helper(idx, start):
+        global shortest
+        if not d:
+            if not shortest[1] or ((idx-1)-start+1 <shortest[0]): shortest = ((idx-1)-start+1,(start, idx-1))
+            return
+        if idx>=len(longer): return None
+        if longer[idx] in d:
+
+            d[longer[idx]] -=1
+            if d[longer[idx]]==0: d.pop(longer[idx])
+            
+            if not start: helper(idx+1, idx)
+            else: helper(idx+1, start)
+
+            if longer[idx] not in d: d[longer[idx]] =1
+            else: d[longer[idx]] +=1
+        
+
+        helper(idx+1, start)
+    
+    d = {}
+    for n in shorter:
+        if n in d: d[n]+=1
+        else: d[n]=1
+
+    global shortest
+    shortest = (float('inf'), None)
+    helper(0,None)
+    print(shortest)
+    print(d)
+    return shortest
+
+'''
+s = [1, 5, 9]
+l = [7, 5, 9, 0, 2, 1, 3, 5, 7, 9, 1, 1, 5, 8, 8, 9, 7]
+shortest_supersequence(s,l)'''
+
+# {7, 5, 9, 0, 2, 1, 3, 5, 7, 9, 1, 1, 5, 8, 8, 9, 7}
+#5:1, 1, 7, 7, 7, 7, 7, 7,12,12,12,12,12,-1,-1,-1,-1
+#1:5, 5, 5, 5, 5, 5,10,10,10,10,10,11,-1,-1,-1,-1,-1
+#9:2, 2, 2, 9, 9, 9, 9, 9, 9, 9,15,15,15,15,15,15,-1
+# :5, 5, 7, 9, 9, 9,10,10,12,12,15,15,-1,-1,-1,-1,-1  
+# Time Complexity: O(s*l), Space Complexity: O(s*l) where l = length of longer array, and s = length of shorter array
+def shortest_supersequence(shorter,longer):
+    locations = [[-1 for _ in range(len(longer))] for _ in range(len(shorter))]
+    for i in range(len(shorter)):
+        for j in range(len(longer)-1, -1, -1):
+            if longer[j] == shorter[i]: locations[i][j] = j
+            else:
+                if j<len(longer)-1: locations[i][j] = locations[i][j+1]
+    
+    shortest = (float('inf'), None)
+    for j in range(len(longer)):
+        max_idx, valid = float('-inf'), True
+        for i in range(len(shorter)):
+            if locations[i][j] == -1: 
+                valid = False
+                break
+            max_idx = max(locations[i][j], max_idx)
+        
+        if valid and (max_idx - j + 1) < shortest[0]: shortest = (max_idx - j + 1, (j, max_idx))
+
+    print(shortest)
+    return shortest
+
+'''
+s = [1, 5, 9]
+l = [7, 5, 9, 0, 2, 1, 3, 5, 7, 9, 1, 1, 5, 8, 8, 9, 7]
+
+shortest_supersequence(s,l)'''
+
+# Time Complexity: O(s*l), Space Complexity: O(l) where l = length of longer array, and s = length of shorter array
+def shortest_supersequence_optimized(shorter,longer):
+
+    locations = [0 for _ in range(len(longer))]
+
+    for i in range(len(shorter)):
+        carry = -1
+        for j in range(len(longer)-1,-1,-1):
+                if longer[j] == shorter[i]: carry = j
+                if locations[j]!=-1:
+                    if longer[j] == shorter[i]: locations[j] = max(locations[j],j)
+                    else: locations[j] = max(locations[j],carry) if carry != -1 else -1 # override max when element is not present yet
+                    
+    shortest = (float('inf'), None)
+    for i in range(len(longer)):
+        if locations[i] != -1 and locations[i] - i + 1< shortest[0]: shortest = (locations[i] - i + 1, (i, locations[i]))
+
+    print(shortest)
+    return shortest
+
+'''
+s = [1, 5, 9]
+l = [7, 8, 9, 0, 2, 1, 3, 8, 7, 9, 1, 1, 4, 8, 5, 9, 7]
+
+shortest_supersequence_optimized(s,l)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.19
