@@ -971,4 +971,402 @@ l = [7, 8, 9, 0, 2, 1, 3, 8, 7, 9, 1, 1, 4, 8, 5, 9, 7]
 shortest_supersequence_optimized(s,l)'''
 
 #---------------------------------------------------------------------------------------------------------
-# 17.19
+# 17.19 Missing Two: You are given an array with all the numbers from 1 to N appearing exactly once,
+# except for one number that is missing. How can you find the missing number in O(N) time and
+# 0(1) space? What if there were two numbers missing?
+
+# [4,1,5,2,6]  4, 1, 5, 2, 0
+# [1,3,6,5,2]  1, 3, 0, 5, 2 
+
+# Time Complexity: O(N), Space Complexity: O(N) (stack depth)
+def missing_two_naive(arr):
+
+    def calculate_factorial(n):
+        if n==1: return 1
+        return n*calculate_factorial(n-1)
+
+    n = len(arr)+1
+    fac = calculate_factorial(n)
+    
+    for i in range(len(arr)): fac = fac/arr[i]
+
+    print(fac)
+    return fac
+'''
+a = [4,1,3,2,6,7,8]
+missing_two_naive(a)'''
+
+# Time Complexity: O(N), Space Complexity: O(1) , will cause overflow though, since we're doing factorial
+def missing_two(arr):
+    if not arr: return None
+
+    def calculate_factorial(n):
+        fac = 1
+        for i in range(1, n+1): fac = fac*i
+        return fac
+
+    n = len(arr)+1
+    fac = calculate_factorial(n)
+    
+    for i in range(len(arr)): fac = fac/arr[i]
+
+    print(fac)
+    return fac
+
+'''
+a = [2,1,4]
+missing_two(a)'''
+
+# Time Complexity: O(N), Space Complexity: O(1)
+def missing_two_optimized(arr):
+    if not arr: return None
+    
+    n = len(arr)+1
+    sum_v = 0
+    for i in range(n+1): sum_v += i
+    for i in range(len(arr)): sum_v -= arr[i]
+
+    print(sum_v)
+    return sum_v
+
+'''
+a = [2,4,3,8,5,6,1]
+missing_two_optimized(a)'''
+
+# Time Complexity: O(N), Space Complexity: O(1)
+# x+y = sum_v, x*y = fac_v, x = sum_v - y -> (sum_v - y)*y = fac_v -> -y^2 + sum_v*y = fac_v -> 0 = y^2 - sum_v*y + fac_v
+def missing_two_two(arr):
+
+    def quad_formula(a,b,c):
+
+        v1 = (-b + ((b**2) - 4*a*c)**(1/2))/2
+        v2 = (-b - ((b**2) - 4*a*c)**(1/2))/2
+        return max(v1, v2)
+
+    if not arr: return None
+    
+    n = len(arr)+2
+    sum_v, fac_v = 0, 1
+    for i in range(1, n+1): fac_v *= i
+    for i in range(n+1): sum_v += i
+    for i in range(len(arr)): 
+        sum_v -= arr[i]
+        fac_v /= arr[i]
+
+    zero = quad_formula(1, -sum_v, fac_v)
+
+    print((sum_v - zero, zero))
+    return (sum_v - zero, zero)
+'''
+a = [1,8,2,7,3,5]
+missing_two_two(a)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.20 Continuous Median: Numbers are randomly generated and passed to a method. Write a program
+# to find and maintain the median value as new values are generated.
+
+class MaxHeap:
+    def __init__(self):
+        self.heap = []
+        self.size = 0
+
+    def heapify(self, idx):
+        l_child = idx*2 + 1
+        r_child = idx*2 + 2
+        greatest = idx
+
+        if l_child < len(self.heap) and self.heap[l_child] > self.heap[idx]: greatest = l_child
+        if r_child < len(self.heap) and self.heap[r_child] > self.heap[idx]: greatest = r_child
+        if greatest != idx: 
+            self.heap[idx], self.heap[greatest] = self.heap[greatest], self.heap[idx]
+            self.heapify(greatest)
+
+    def insertHelper(self, idx):
+        parent = (idx-1) // 2
+        if parent >= 0 and self.heap[parent] < self.heap[idx]:
+            self.heap[idx], self.heap[parent] = self.heap[parent], self.heap[idx]
+            self.insertHelper(parent)
+
+    def insert(self, val):
+        self.heap.append(val)
+        self.size +=1
+        self.insertHelper(self.size-1)
+
+    def deleteRoot(self):
+        root = self.heap[0]
+        self.heap[0] = self.heap.pop()
+        self.heapify(0)
+        self.size -=1
+        return root
+
+    def peek(self):
+        return self.heap[0]
+        
+
+class MinHeap:
+    def __init__(self):
+        self.heap = []
+        self.size = 0
+
+    def heapify(self, idx):
+        l_child = idx*2 + 1
+        r_child = idx*2 + 2
+        smallest = idx
+
+        if l_child < len(self.heap) and self.heap[l_child] < self.heap[idx]: smallest = l_child
+        if r_child < len(self.heap) and self.heap[r_child] < self.heap[idx]: smallest = r_child
+        if smallest != idx: 
+            self.heap[idx], self.heap[smallest] = self.heap[smallest], self.heap[idx]
+            self.heapify(smallest)
+
+    def insertHelper(self, idx):
+        parent = (idx-1) // 2
+        if parent >= 0 and self.heap[parent] > self.heap[idx]:
+            self.heap[idx], self.heap[parent] = self.heap[parent], self.heap[idx]
+            self.insertHelper(parent)
+
+    def insert(self, val):
+        self.heap.append(val)
+        self.size +=1
+        self.insertHelper(self.size-1)
+
+    def deleteRoot(self):
+        root = self.heap[0]
+        self.heap[0] = self.heap.pop()
+        self.heapify(0)
+        self.size-=1
+        return root
+
+    def peek(self):
+        return self.heap[0]
+        
+# Time Complexity: O(logN) to insert, O(1) to get median, Space Complexity: O(N), where N is the # of numbers streamed so far
+def continuous_median(numbers):
+
+    def helper(n):
+        global median
+        if min_heap.size == 0 and max_heap.size ==0:
+            max_heap.insert(n)
+            median = n
+            return
+
+        elif max_heap.size == min_heap.size:
+            if n <= median: max_heap.insert(n)
+            else:
+                max_heap.insert(min_heap.deleteRoot()) 
+                min_heap.insert(n)
+
+            median = max_heap.peek()
+        else:
+            if n <= median:
+                min_heap.insert(max_heap.deleteRoot())
+                max_heap.insert(n)
+            else: min_heap.insert(n)
+
+            median = (max_heap.peek() + min_heap.peek())/2
+
+    global median
+    min_heap = MinHeap()
+    max_heap = MaxHeap()
+    # simualte stream
+    for i in range(len(numbers)): 
+        helper(n[i])
+        print(f"MEDIAN: {median}")
+'''
+n = [3, 66, 12, 99, -23]
+continuous_median(n)'''
+
+# Time Complexity: O(logN) to insert, O(1) to get median, Space Complexity: O(N), where N is the # of numbers streamed so far
+def continuous_median_clean(numbers):
+
+    def helper(n):
+        global median
+        if n <= median: max_heap.insert(n)
+        else: min_heap.insert(n)
+        
+        if min_heap.size-1> max_heap.size: max_heap.insert(min_heap.deleteRoot())
+        if max_heap.size-1> min_heap.size: min_heap.insert(max_heap.deleteRoot())
+        
+        if min_heap.size==max_heap.size: median = (max_heap.peek() + min_heap.peek())/2 
+        elif min_heap.size>max_heap.size: median = min_heap.peek()
+        else: median = max_heap.peek()
+
+    global median
+    median = float('inf')
+    min_heap = MinHeap()
+    max_heap = MaxHeap()
+    # simulate stream
+    for i in range(len(numbers)): 
+        helper(n[i])
+        print(f"MEDIAN: {median}")
+
+'''
+n = [3, 66, 12, 99, -23, -2, 88]
+continuous_median_clean(n)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.21 Volume of Histogram: Imagine a histogram (bar graph). Design an algorithm to compute the
+# volume of water it could hold if someone poured water across the top. You can assume that each
+# histogram bar has width 1.
+# EXAMPLE
+# Input: {0, 0, 4, 0, 0, 6, 0, 0, 3, 0, 5, 0, 1, 0, 0, 0}
+#
+#           |
+#           |         |
+#     |     |         |
+#     |     |     |   |
+#     |     |     |   |
+# _ _ | _ _ | _ _ | _ | _ | _ _ _
+#
+# Output: 26
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def volume_of_histogram(histogram):
+    '''Sweep left then right, and get max possible volume at location, then subtract out bars'''
+    l_max = [0 for i in range(len(histogram))]
+    r_max = [0 for _ in range(len(histogram))]
+    min_v = [0 for _ in range(len(histogram))]
+    l_max[0], r_max[-1] = histogram[0], histogram[-1]
+    for i in range(1,len(histogram)): l_max[i] = max(l_max[i-1], histogram[i])
+    for i in range(len(histogram)-2,-1,-1): r_max[i] = max(r_max[i+1], histogram[i])
+    for i in range(len(histogram)): min_v[i] = min(l_max[i], r_max[i])
+    
+    final_vol = 0
+    for i in range(len(histogram)): final_vol += min_v[i] - histogram[i]
+    
+    print(final_vol)
+    return final_vol
+
+'''
+h = [0, 0, 4, 0, 0, 6, 0, 0, 3, 0, 5, 0, 1, 0, 0, 0]
+volume_of_histogram(h)'''
+
+# Time Complexity: O(N), Space Complexity: O(N)
+def volume_of_histogram_clean(histogram):
+
+    l_max = [0 for i in range(len(histogram))]
+    l_max[0] = histogram[0]
+    for i in range(1,len(histogram)): l_max[i] = max(l_max[i-1], histogram[i])
+    
+    r_max = histogram[-1]
+    final_vol = 0
+    for i in range(len(histogram)-1,-1,-1):
+        r_max = max(r_max, histogram[i])
+        final_vol += min(r_max, l_max[i]) - histogram[i]
+        
+
+    print(final_vol)
+    return final_vol
+'''
+h = [0, 0, 4, 0, 0, 6, 0, 0, 3, 0, 5, 0, 1, 0, 0, 0]
+volume_of_histogram_clean(h)'''
+
+#           |
+#           |         |
+#     |     |         |
+#     |     |     |   |
+#     |     |     |   |
+# _ _ | _ _ | _ _ | _ | _ | _ _ _
+
+# Time Complexity: O(N), Space Complexity: O(1)
+def volume_of_histogram_optimized(histogram):
+
+    i,j = 0, len(histogram)-1
+    l_max = r_max = volume = 0
+
+    while i<j:
+        if histogram[i]<histogram[j]:
+            if histogram[i]<l_max: volume += l_max - histogram[i]
+            else: l_max = histogram[i]  
+            i+=1
+        else:
+            if histogram[j]<r_max: volume += r_max - histogram[j]
+            else: r_max = histogram[j]
+            j-=1
+
+    print(volume)
+    return volume
+'''
+h = [0, 0, 4, 0, 0, 6, 0, 0, 3, 0, 5, 0, 1, 0, 0, 0]
+volume_of_histogram_optimized(h)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.22 Word Transformer: Given two words of equal length that are in a dictionary, write a method to
+# transform one word into another word by changing only one letter at a time. The new word you get
+# in each step must be in the dictionary.
+# EXAMPLE
+# Input: DAMP, LIKE
+# Output: DAMP-> LAMP-> LIMP-> LIME-> LIKE
+
+# Time Complexity: O(N*26*N) -> O(N^2 * K) ?, Space Complexity: O(N) recursion stack
+def word_transformer_naive(word1, word2, dictionary):
+    
+    def helper(word, path, count):
+        
+        if word not in dictionary: return
+        if count == len(word1):
+            if word == word2: res.append(path)
+            return
+        
+        for i in range(len(word)):
+            for a in avail:
+                check = word[:i] + a + word[i+1:]
+                if check in dictionary: helper(check, path+[check], count+1)
+
+    res = []
+    avail = set('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    
+    helper(word1,[word1],0)
+    print(res)
+    return res
+
+'''
+w1 = 'DAMP'
+w2 = 'LIKE'
+d = {'DAMP', 'LAMP', 'LIMP', 'LIME', 'LIKE'}
+word_transformer_naive(w1,w2,d)'''
+
+from collections import deque
+def word_transformer(word1, word2, dictionary):
+    
+    # check if two words are only one edit away
+    def checkOneEdit(w1, w2):
+        diff_count=0
+        for i in range(len(w1)):
+            if w1[i]!=w2[i]: diff_count+=1
+            if diff_count>1: return False
+        return True
+    
+    queue = deque()
+    queue.append([word1])
+    res = []
+    visited = set()
+    visited.add(word1)
+    while queue:
+        currWords = set()
+        for i in range(len(queue)):
+            path = queue.popleft()
+            lastword = path[-1]
+            if lastword == word2: res.append(path)
+            for word in dictionary:
+                if checkOneEdit(word, lastword) and word not in visited:
+                    queue.append(path+[word])
+                    currWords.add(word)
+
+        visited.update(currWords)
+    
+    print(res)
+    return res
+'''
+w1 = 'DAMP'
+w2 = 'LIKE'
+d = {'DAMP', 'LAMP', 'LIMP', 'LIME', 'LIKE', 'DAME', 'LAME'}
+word_transformer(w1,w2,d)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.23 Max Square Matrix: Imagine you have a square matrix, where each cell (pixel) is either black or
+# white. Design an algorithm to find the maximum subsquare such that all four borders are filled with
+# black pixels.
+
+def max_square_matrix():
+    pass
