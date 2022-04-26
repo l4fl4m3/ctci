@@ -1300,7 +1300,7 @@ volume_of_histogram_optimized(h)'''
 
 # Time Complexity: O(N*26*N) -> O(N^2 * K) ?, Space Complexity: O(N) recursion stack
 def word_transformer_naive(word1, word2, dictionary):
-    
+    '''THIS WONT WORK FOR PATH > LEN(WORD1/2) !!!!!'''
     def helper(word, path, count):
         
         if word not in dictionary: return
@@ -1320,13 +1320,14 @@ def word_transformer_naive(word1, word2, dictionary):
     print(res)
     return res
 
-'''
+
 w1 = 'DAMP'
 w2 = 'LIKE'
-d = {'DAMP', 'LAMP', 'LIMP', 'LIME', 'LIKE'}
-word_transformer_naive(w1,w2,d)'''
+d = {'DAMP', 'LAMP', 'LIMP', 'LIME', 'LIKE', 'DAME', 'LAME', }
+word_transformer_naive(w1,w2,d)
 
 from collections import deque
+# Time Complexity: O(N^2 * M ), Space Complexity: O(N*M) where N=length of word and M=# words in dict
 def word_transformer(word1, word2, dictionary):
     
     # check if two words are only one edit away
