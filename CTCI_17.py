@@ -1320,11 +1320,11 @@ def word_transformer_naive(word1, word2, dictionary):
     print(res)
     return res
 
-
+'''
 w1 = 'DAMP'
 w2 = 'LIKE'
 d = {'DAMP', 'LAMP', 'LIMP', 'LIME', 'LIKE', 'DAME', 'LAME', }
-word_transformer_naive(w1,w2,d)
+word_transformer_naive(w1,w2,d)'''
 
 from collections import deque
 # Time Complexity: O(N^2 * M ), Space Complexity: O(N*M) where N=length of word and M=# words in dict
@@ -1369,5 +1369,251 @@ word_transformer(w1,w2,d)'''
 # white. Design an algorithm to find the maximum subsquare such that all four borders are filled with
 # black pixels.
 
-def max_square_matrix():
-    pass
+# B B B B B  -> 4*4 = 16
+# B B W W B
+# B B W W B
+# W B B B B
+# W W W B B
+
+#   1 2 3
+# 1 1 2 3
+# 2 2 4 6
+# 3 3 6 9
+
+# Time Complexity: O(N^2), Space Complexity: O(N^2) where N = dimension of square
+def max_square_matrix(matrix):
+    
+    counts = [[(0,0) for _ in range(len(matrix))] for _ in range(len(matrix))]
+    for i in range(len(matrix)):
+        for j in range(len(matrix)):
+            if matrix[i][j] == 'B': counts[i][j] = (counts[i-1][j][0]+1, counts[i][j-1][1]+1)
+
+    max_square = (0,None)
+    for i in range(len(matrix)-1,-1,-1):
+        for j in range(len(matrix)-1,-1,-1):
+            min_span = min(counts[i][j][0],counts[i][j][1])
+            up, left = i-min_span+1, j-min_span+1
+
+            if matrix[i][j] == 'B' and counts[up][j][1] >= min_span and counts[i][left][0] >= min_span and min_span**2 > max_square[0]:
+                max_square = (min_span**2, ((i-min_span+1, j-min_span+1), (i,j)))
+
+    print(max_square)
+    return max_square
+
+'''
+m = [['B', 'B', 'B', 'B', 'B'],['B', 'B', 'W', 'W', 'B'],['B', 'B', 'W', 'W', 'B'],['W', 'B', 'B', 'B', 'B'],['W', 'W', 'W', 'B', 'B']]
+max_square_matrix(m)'''
+
+#---------------------------------------------------------------------------------------------------------
+# 17.24 Max Submatrix: Given an NxN matrix of positive and negative integers, write code to find the
+# submatrix with the largest possible sum.
+# 
+#  1 -5  7  7 -4  -> 33
+#  2  7  7  7  1  
+# -2 -3 -1 -1 -2  
+# -2 -2  1  1 -2  
+# -1  3 -2  2 -2 
+
+# Brute force -> N^2 possible subrows, N^2 possible subcols, N^4 time for submatrices, N^2 to compute sum for each,
+# therefore, O(N^6) time for brute force
+
+# Time Complexity: O(N^4), Space Complexity: O(N^2)
+def max_submatrix(matrix):
+
+    '''LOOKS SIMPLE BUT PAY CLOSE ATTENTION !!!'''
+    
+    sub_sum = [[0 for _ in range(len(matrix))] for _ in range(len(matrix))]
+    for i in range(len(matrix)):
+        for j in range(len(matrix)):
+            up = sub_sum[i-1][j] if i>0 else 0 # actually dont even need these if statement, will wrap around
+            left = sub_sum[i][j-1] if j>0 else 0 # actually dont even need these if statement, will wrap around
+            union = sub_sum[i-1][j-1] if j>0 and i>0 else 0 # actually dont even need these if statement, will wrap around
+            sub_sum[i][j] = matrix[i][j] + up + left - union
+    
+    max_sub = (0, None)
+    for i in range(len(matrix)):
+        for i_c in range(i,len(matrix)):
+            for j in range(len(matrix)):
+                for j_c in range(j,len(matrix)):
+                    # carefull attention to the indexing !!!
+                    sum_t = sub_sum[i-1][j_c] if i>0 else 0
+                    sum_l = sub_sum[i_c][j-1] if j>0 else 0
+                    sum_tl = sub_sum[i-1][j-1] if i>0 and j>0 else 0
+                    sum_whole = sub_sum[i_c][j_c] - sum_t - sum_l + sum_tl
+                    
+                    if sum_whole > max_sub[0]: max_sub = (sum_whole, ((i,j), (i_c,j_c)))
+                    
+    print(max_sub)
+    return max_sub
+
+'''
+m = [[1, -5, 7, 7, -4],[2, 7, 7, 7, 1],[-2, -3, -1, -1, -2],[-2, -2, 1, 1, -2],[-1, 3, -2, 2, -2]]
+max_submatrix(m)'''
+
+#--------------------------------------------------------------------------------------------------------------
+# 17.25 Word Rectangle: Given a list of millions of words, design an algorithm to create the largest possible
+# rectangle of letters such that every row forms a word (reading left to right) and every column forms
+# a word (reading top to bottom). The words need not be chosen consecutively from the list, but all
+# rows must be the same length and all columns must be the same height.
+
+# p h a t
+# h o p e
+# o p e n
+
+# note: possible largest rectangle is longest word in list, also: can use bag of words (trie)
+
+# Time Complexity: ??, Space Complexity: O(N) ??
+def word_rectangle(words):
+
+    '''TRICKY AS A MF !!!'''
+
+    def build_trie(length):
+        tr = {}
+        for word in dic[length]:
+            t = tr
+            for w in word:
+                if w not in t: t[w] = {}
+                t = t[w]
+            t[-1] = -1
+        return tr
+
+    def check_valid(width, prefix):
+        if width not in trie_dict: return False
+        if len(prefix) == 1: return True
+        tr = trie_dict[width]
+        for c in prefix:
+            if c in tr: tr = tr[c]
+            else: return False
+
+        return True
+
+    def create_rec(rec, visited, l, w, w_list):
+
+        if len(rec) == w: return rec
+        if len(visited) == len(w_list): return None
+        
+        for word in w_list:
+            if word not in visited:
+                rec.append(list(word))
+                visited.add(word)
+                for j in range(len(word)):
+                    prefix = ''
+                    for i in range(len(rec)):
+                        prefix += rec[i][j]
+                        if not check_valid(w,prefix): return None
+        
+        return create_rec(rec, visited, l, w, w_list)
+        
+    dic = {}
+    max_l = 0
+    for w in words:
+        if len(w) in dic: dic[len(w)].append(w)
+        else: dic[len(w)] = [w]
+        max_l = max(max_l, len(w))
+    
+    trie_dict = {k:build_trie(k) for k in dic}
+    
+    for i in range(max_l,0,-1):
+        for j in range(i,0,-1):
+            if i in dic and j in dic:
+                r = create_rec([],set(), i, j, dic[i])
+                if r:
+                    print(len(r)*len(r[0]),r)
+                    return (len(r)*len(r[0]),r)
+    
+    return None
+
+'''
+#w = ['tester', 'phat', 'hope', 'open', 'pho', 'hop', 'ape', 'ten']
+w = ['spears', 'planet', 'easily', 'animal', 'relate', 'styles']
+word_rectangle(w)'''
+
+#--------------------------------------------------------------------------------------------------------------
+# 17.26 Sparse Similarity: The similarity of two documents (each with distinct words) is defined to be the
+# size of the intersection divided by the size of the union. For example, if the documents consist of
+# integers, the similarity of {1, 5, 3} and { 1, 7, 2, 3} is 0. 4, because the intersection has size
+# 2 and the union has size 5.
+# We have a long list of documents (with distinct values and each with an associated ID) where the
+# similarity is believed to be "sparse:'That is, any two arbitrarily selected documents are very likely to
+# have similarity O. Design an algorithm that returns a list of pairs of document IDs and the associated
+# similarity.
+# Print only the pairs with similarity greater than 0. Empty documents should not be printed at all. For
+# simplicity, you may assume each document is represented as an array of distinct integers.
+# EXAMPLE
+#
+# Input:
+# 13: {14, 15, 100, 9, 3}
+# 16: {32, 1, 9, 3, 5}
+# 19: {15, 29, 2, 6, 8, 7}
+# 24: {7, 10}
+#
+# Output:
+# ID1, ID2: SIMILARITY
+# 13,  19:  0.1
+# 13,  16:  0.25
+# 19,  24:  0.14285714285714285
+
+
+# Time Complexity: O(N^2 * W^2), Space Complexity: O(1) where N=# of documents and W=# of words in longest doc
+def sparse_similarity_naive(documents):
+
+    #O(W^2)
+    def compute(d_a, d_b):
+        intersection = 0
+        for i in range(len(d_a[1])):
+            for j in range(len(d_b[1])):
+                if d_a[1][i]==d_b[1][j]: intersection += 1
+        if intersection:
+            union = len(d_a[1]) + len(d_b[1]) - intersection
+            print(f"{d_a[0]}, {d_b[0]}: {intersection/union}")
+    
+    #O(N^2)
+    for i in range(len(documents)):
+        doc_a = documents[i]
+        for j in range(i+1,len(documents)):
+            doc_b = documents[j]
+            compute(doc_a, doc_b)
+
+
+            
+'''
+d = [[13, [14, 15, 100, 9, 3]], [16, [32, 1, 9, 3, 5]], [19, [15, 29, 2, 6, 8, 7]], [24, [7, 10]]]
+sparse_similarity_naive(d)'''
+
+# Time Complexity: O(N^2 * W + N * WlogW), Space Complexity: O(1) where N=# of documents and W=# of words in longest doc
+def sparse_similarity(documents):
+
+    #O(W)
+    def compute(d_a, d_b):
+        intersection = i = j = 0
+        while i<len(d_a[1])-1 and i<len(d_b[1])-1:
+            if d_a[1][i] == d_b[1][j]: 
+                intersection += 1
+                i+=1
+                j+=1
+            if d_a[1][i] > d_b[1][j]: j+=1
+            else: i+=1
+        while i<len(d_a[1])-1: 
+            if d_a[1][i] == d_b[1][j]: intersection += 1
+            i+=1
+        while j<len(d_b[1])-1: 
+            if d_a[1][i] == d_b[1][j]: intersection += 1
+            j+=1
+
+        if intersection:
+            union = len(d_a[1]) + len(d_b[1]) - intersection
+            print(f"{d_a[0]}, {d_b[0]}: {intersection/union}")
+
+    #O(N * WlogW)
+    for i in range(len(documents)): documents[i][1].sort()
+    
+    #O(N^2)
+    for i in range(len(documents)):
+        doc_a = documents[i]
+        for j in range(i+1,len(documents)):
+            doc_b = documents[j]
+            compute(doc_a, doc_b)
+
+'''
+d = [[13, [14, 15, 100, 9, 3]], [16, [32, 1, 9, 3, 5]], [19, [15, 29, 2, 6, 8, 7]], [24, [7, 10]]]
+sparse_similarity(d)'''
