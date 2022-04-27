@@ -5400,4 +5400,3 @@ def calculator_cleaner(input):
 a = "2*3+5/6*3+15"
 b = "2-6-7*8/2+5"
 print(calculator_cleaner(b))'''
-

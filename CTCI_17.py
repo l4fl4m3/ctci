@@ -1617,3 +1617,36 @@ def sparse_similarity(documents):
 '''
 d = [[13, [14, 15, 100, 9, 3]], [16, [32, 1, 9, 3, 5]], [19, [15, 29, 2, 6, 8, 7]], [24, [7, 10]]]
 sparse_similarity(d)'''
+
+
+# Time Complexity: O(N*W + P*W), Space Complexity: O(N*W), where N=# of documents, W=# of words in longest doc, P= pairs of docs with intersection
+def sparse_similarity_optimized(documents):
+
+    # O(N*W)
+    word_map = {}
+    doc_length = {}
+    for doc in documents:
+        for w in doc[1]:
+            if w not in word_map: word_map[w] = [doc[0]]
+            else: word_map[w].append(doc[0])
+        doc_length[doc[0]] = len(doc[1])
+
+    # O(P*W)
+    pairs_of_docs = {} # intersection map
+    for w in word_map:
+        for i in range(len(word_map[w])):
+            for j in range(i+1,len(word_map[w])):
+                if (word_map[w][i],word_map[w][j]) not in pairs_of_docs: pairs_of_docs[(word_map[w][i],word_map[w][j])] = 1
+                else: pairs_of_docs[(word_map[w][i],word_map[w][j])] += 1
+
+   
+    # O(P)
+    for pair in pairs_of_docs:
+        intersection = pairs_of_docs[pair]
+        union = doc_length[pair[0]] + doc_length[pair[1]] - intersection
+        print(f"{pair[0]}, {pair[1]}: {intersection/union}")
+       
+
+'''
+d = [[13, [14, 15, 100, 9, 3]], [16, [32, 1, 9, 3, 5]], [19, [15, 29, 2, 6, 8, 7]], [24, [7, 10]]]
+sparse_similarity_optimized(d)'''
